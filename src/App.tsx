@@ -104,8 +104,13 @@ export default function App() {
     setMessages((prev) => [...prev, userObj]);
     setNewMessage('');
 
-    // AKSI 1: Jika mengetik "+ Input Data Blok" di channel #engineering
-    if (activeChannel.name === 'engineering' && userText.toLowerCase().includes('+ input data blok')) {
+    const lowerText = userText.toLowerCase();
+
+    // AKSI 1: Jika mengetik perintah Input Data Blok
+    if (
+      activeChannel.name === 'engineering' && 
+      (lowerText.includes('input data') || lowerText.includes('input blok') || lowerText.includes('+ input'))
+    ) {
       setTimeout(() => {
         const botTemplate = {
           id: (Date.now() + 1).toString(),
@@ -127,7 +132,33 @@ export default function App() {
       return;
     }
 
-    // AKSI 2: Jika user mengirimkan pesan format input data blok (mengandung blockId & kriIndicator)
+    // AKSI 2: Jika mengetik perintah Edit Data Blok
+    if (
+      activeChannel.name === 'engineering' && 
+      (lowerText.includes('edit data') || lowerText.includes('edit blok') || lowerText.includes('- edit'))
+    ) {
+      setTimeout(() => {
+        const editTemplate = {
+          id: (Date.now() + 1).toString(),
+          channel_id: activeChannel.id,
+          sender_type: 'agent',
+          sender_name: 'Raffasya (Process Agent)',
+          content: `Silakan salin templat di bawah ini, sesuaikan nilainya, lalu kirimkan kembali ke chat:\n\n` +
+            `blockId: 'Blok 3B (Outfitting)',\n` +
+            `plannedProgress: 80,\n` +
+            `actualProgress: 73,\n` +
+            `delayDays: 7,\n` +
+            `riskLevel: 'High',\n` +
+            `kriIndicator: 'Keterlambatan Supply Material Plate',\n` +
+            `costImpactUSD: 18000`,
+          created_at: new Date().toISOString()
+        };
+        setMessages((prev) => [...prev, editTemplate]);
+      }, 600);
+      return;
+    }
+
+    // AKSI 3: Jika user mengirimkan pesan format data blok (Tambah baru atau Update jika blockId sudah ada)
     if (userText.includes('blockId:') && userText.includes('kriIndicator:')) {
       try {
         const blockIdMatch = userText.match(/blockId:\s*['"]([^'"]+)['"]/);
@@ -149,7 +180,22 @@ export default function App() {
             costImpactUSD: costMatch ? Number(costMatch[1]) : 0,
           };
 
-          setBlocksData((prev) => [...prev, newBlockObj]);
+          let isUpdated = false;
+
+          setBlocksData((prev) => {
+            const existsIndex = prev.findIndex(
+              (b) => b.blockId.toLowerCase().trim() === newBlockObj.blockId.toLowerCase().trim()
+            );
+
+            if (existsIndex !== -1) {
+              isUpdated = true;
+              const updatedList = [...prev];
+              updatedList[existsIndex] = newBlockObj;
+              return updatedList;
+            } else {
+              return [...prev, newBlockObj];
+            }
+          });
 
           setTimeout(() => {
             const botConfirm = {
@@ -157,7 +203,9 @@ export default function App() {
               channel_id: activeChannel.id,
               sender_type: 'agent',
               sender_name: 'Iris (Data Agent)',
-              content: `✅ Data **${newBlockObj.blockId}** berhasil ditambahkan ke dalam SBLC Risk Stream dan kalkulasi Critical Path!`,
+              content: isUpdated 
+                ? `✏️ Data **${newBlockObj.blockId}** berhasil diperbarui (di-update) pada SBLC Risk Stream!`
+                : `✅ Data **${newBlockObj.blockId}** berhasil ditambahkan ke dalam SBLC Risk Stream dan kalkulasi Critical Path!`,
               created_at: new Date().toISOString()
             };
             setMessages((prev) => [...prev, botConfirm]);
