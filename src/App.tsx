@@ -1,325 +1,494 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  Send, Bot, Brain, Users, Sparkles, Code, MessageSquare, 
-  BookOpen, Plus, Search, ChevronRight, FileText, CheckCircle2, AlertCircle
+  Star, 
+  ChevronLeft, 
+  Circle, 
+  Triangle, 
+  Square, 
+  Search,
+  LayoutGrid,
+  List as ListIcon,
+  Clock,
+  BarChart2,
+  Hash,
+  Layers,
+  Code,
+  Box,
+  TrendingUp,
+  BarChart,
+  BookOpen,
+  Send,
+  Bot,
+  User,
+  Sparkles
 } from 'lucide-react';
-import { Sidebar } from './components/Sidebar';
-import { useChannels, useAgents, useKnowledge, useMessages } from './hooks/useWorkspace';
+import { createClient } from '@supabase/supabase-js';
 
+// Setup Supabase Client (Menyesuaikan dengan env/config Anda)
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+// ==========================================
+// 1. DATA MILESTONE SBLC
+// ==========================================
+const milestoneData = [
+  {
+    id: 'edc',
+    code: 'EDC',
+    label: 'EDC - Effective...',
+    year: '2026',
+    icon: Star,
+    color: 'text-amber-400',
+    bgColor: 'bg-amber-400',
+    position: '18%',
+  },
+  {
+    id: 'fsc',
+    code: 'FSC',
+    label: 'FSC - First Ste...',
+    year: '2027',
+    icon: ChevronLeft,
+    color: 'text-slate-400',
+    bgColor: 'bg-slate-400',
+    position: '42%',
+  },
+  {
+    id: 'kl',
+    code: 'KL',
+    label: 'KL - Keel Laying',
+    year: '2027',
+    icon: Circle,
+    color: 'text-blue-500',
+    bgColor: 'bg-blue-500',
+    position: '54%',
+  },
+  {
+    id: 'l',
+    code: 'L (Launching)',
+    label: 'L - Launching',
+    year: '2027',
+    icon: Triangle,
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-600',
+    position: '70%',
+    rotateIcon: 'rotate-180',
+  },
+  {
+    id: 'hat',
+    code: 'HAT & SAT',
+    label: 'HAT & SAT - Har...',
+    year: '2028',
+    icon: Square,
+    color: 'text-red-500',
+    bgColor: 'bg-red-500',
+    position: '82%',
+  },
+  {
+    id: 'd',
+    code: 'D (Delivery)',
+    label: 'D - Delivery',
+    year: '2028',
+    icon: Star,
+    color: 'text-red-500',
+    bgColor: 'bg-red-500',
+    position: '92%',
+  },
+];
+
+// Map Icon untuk Sidebar Channels
+const iconMap: Record<string, React.ElementType> = {
+  Layers,
+  Hash,
+  Code,
+  Box,
+  TrendingUp,
+  BarChart,
+  BookOpen
+};
+
+// ==========================================
+// 2. KOMPONEN DASHBOARD MILESTONE SBLC
+// ==========================================
+export const MilestoneDashboard: React.FC = () => {
+  return (
+    <div className="w-full max-w-6xl mx-auto space-y-5 p-2 font-sans text-slate-100">
+      
+      {/* KARTU UTAMA: DIAGRAM MILESTONE SBLC */}
+      <div className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-6 shadow-xl backdrop-blur-md">
+        
+        {/* Header Diagram */}
+        <div className="mb-6 space-y-1">
+          <h2 className="text-lg font-bold text-white tracking-wide">
+            Diagram Milestone SBLC
+          </h2>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Otomatis dari tugas yang punya field <strong className="text-slate-300">Epic</strong> (nama proyek) dan <strong className="text-slate-300">Tanggal mulai</strong> — tambahkan proyek/milestone baru di Board/List, diagram ini akan ikut bertambah.
+          </p>
+        </div>
+
+        {/* Area Timeline Visual */}
+        <div className="relative my-10 px-4 py-8">
+          
+          {/* Label Tahun (Header Timeline) */}
+          <div className="absolute -top-6 w-full flex justify-between text-xs font-semibold text-slate-400 border-b border-dashed border-slate-800/40 pb-2">
+            <span className="ml-[16%]">2026</span>
+            <span className="ml-[10%]">2027</span>
+            <span className="mr-[8%]">2028</span>
+          </div>
+
+          {/* Label Proyek Utama di Sisi Kiri */}
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 font-extrabold text-sm text-slate-200 tracking-wider">
+            SBLC 2026
+          </div>
+
+          {/* Garis Dasar Timeline (Dotted Line) */}
+          <div className="ml-28 relative h-10 flex items-center">
+            <div className="w-full border-b-2 border-dotted border-slate-600/60" />
+
+            {/* Garis Pembatas Tahun (Vertical Separator) */}
+            <div className="absolute left-[38%] top-0 bottom-0 border-l border-dashed border-slate-600/50" />
+
+            {/* Iterasi Milestone Marker */}
+            {milestoneData.map((item) => {
+              const IconComponent = item.icon;
+              return (
+                <div
+                  key={item.id}
+                  className="absolute flex flex-col items-center -translate-x-1/2 group cursor-pointer"
+                  style={{ left: item.position }}
+                >
+                  {/* Label Teks di Atas Pin */}
+                  <span className="text-[11px] font-mono text-slate-300 mb-2 whitespace-nowrap opacity-90 group-hover:opacity-100 transition-opacity">
+                    {item.label}
+                  </span>
+
+                  {/* Icon Node Visual */}
+                  <div className="bg-slate-950 p-1 rounded-full z-10 transition-transform group-hover:scale-125">
+                    <IconComponent 
+                      size={14} 
+                      className={`${item.color} fill-current ${item.rotateIcon || ''}`} 
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Legend / Keterangan Simbol Milestone */}
+        <div className="flex flex-wrap items-center gap-6 pt-4 border-t border-slate-800/60 text-xs text-slate-300 ml-28">
+          {milestoneData.map((item) => {
+            const IconComponent = item.icon;
+            return (
+              <div key={item.id} className="flex items-center gap-2">
+                <IconComponent 
+                  size={13} 
+                  className={`${item.color} fill-current ${item.rotateIcon || ''}`} 
+                />
+                <span className="font-mono text-[11px]">{item.code}</span>
+              </div>
+            );
+          })}
+        </div>
+
+      </div>
+
+      {/* GRID KARTU STATISTIK TUGAS */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-5 shadow-lg flex flex-col justify-between hover:border-slate-700 transition-colors">
+          <div className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
+            Completed Tasks
+          </div>
+          <div className="text-3xl font-extrabold text-white mt-3">3</div>
+        </div>
+
+        <div className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-5 shadow-lg flex flex-col justify-between hover:border-slate-700 transition-colors">
+          <div className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
+            Incomplete Tasks
+          </div>
+          <div className="text-3xl font-extrabold text-white mt-3">3</div>
+        </div>
+
+        <div className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-5 shadow-lg flex flex-col justify-between hover:border-slate-700 transition-colors">
+          <div className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
+            Overdue Tasks
+          </div>
+          <div className="text-3xl font-extrabold text-white mt-3">0</div>
+        </div>
+
+        <div className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-5 shadow-lg flex flex-col justify-between hover:border-slate-700 transition-colors">
+          <div className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
+            Total Tasks
+          </div>
+          <div className="text-3xl font-extrabold text-white mt-3">6</div>
+        </div>
+      </div>
+
+    </div>
+  );
+};
+
+// ==========================================
+// 3. KOMPONEN UTAMA APPLICATION (App)
+// ==========================================
 export default function App() {
-  const [activeView, setActiveView] = useState<'chat' | 'knowledge' | 'agents'>('chat');
-  
-  // 1. Inisialisasi activeChannelId sebagai null terlebih dahulu
-  const [activeChannelId, setActiveChannelId] = useState<string | null>(null);
-  const [selectedKnowledgeCategory, setSelectedKnowledgeCategory] = useState<string | null>('Company Brain');
-  const [inputText, setInputText] = useState('');
-  const [collapsed, setCollapsed] = useState(false);
+  const [activeTab, setActiveTab] = useState<'board' | 'list' | 'timeline' | 'dashboard'>('dashboard');
+  const [channels, setChannels] = useState<any[]>([]);
+  const [activeChannelId, setActiveChannelId] = useState<string>('10000000-0000-0000-0000-000000000001');
+  const [messages, setMessages] = useState<any[]>([]);
+  const [newMessage, setNewMessage] = useState('');
 
-  // Custom Hooks dari Supabase
-  const { channels } = useChannels();
-  const { agents } = useAgents();
-  const { items: knowledgeItems, loading: knowledgeLoading } = useKnowledge(selectedKnowledgeCategory);
-  const { messages, loading: messagesLoading, sendMessage, sendAgentMessage } = useMessages(activeChannelId);
-
-  const chatEndRef = useRef<HTMLDivElement>(null);
-
-  // 2. PERBAIKAN UTAMA: Auto-select channel pertama yang ada di database Supabase
+  // Load Channels dari Supabase
   useEffect(() => {
-    if (channels.length > 0 && !activeChannelId) {
-      setActiveChannelId(channels[0].id);
+    async function fetchChannels() {
+      const { data, error } = await supabase.from('channels').select('*').order('created_at', { ascending: true });
+      if (!error && data && data.length > 0) {
+        setChannels(data);
+      }
     }
-  }, [channels, activeChannelId]);
+    fetchChannels();
+  }, []);
 
+  // Load Messages sesuai Channel yang Aktif
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    async function fetchMessages() {
+      if (!activeChannelId) return;
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('channel_id', activeChannelId)
+        .order('created_at', { ascending: true });
+      if (!error && data) {
+        setMessages(data);
+      }
+    }
+    fetchMessages();
+  }, [activeChannelId]);
 
-  // Handler Navigasi Knowledge dari Sidebar
-  const handleOpenKnowledge = (categoryName?: string) => {
-    setSelectedKnowledgeCategory(categoryName || 'Company Brain');
-    setActiveView('knowledge');
-  };
+  // Handle Kirim Pesan
+  const handleSendMessage = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim()) return;
 
-  // Handler Pengiriman Pesan & Respon Otomatis AI Agent
-  const handleSendMessage = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (!inputText.trim() || !activeChannelId) return;
+    const msgObj = {
+      channel_id: activeChannelId,
+      sender_type: 'user',
+      sender_name: 'Asih Winarti',
+      content: newMessage,
+      message_type: 'text'
+    };
 
-    const userQuery = inputText;
-    setInputText('');
-
-    // Simpan pesan pengguna ke Supabase via hook terbaru
-    await sendMessage(userQuery, 'Asih Winarti');
-
-    // Deteksi kata kunci & balasan AI Agent
-    const lower = userQuery.toLowerCase();
-
-    if (lower.includes('sblc') || lower.includes('jadwal') || lower.includes('blok')) {
-      setTimeout(async () => {
-        await sendAgentMessage(
-          'Atlas',
-          'Berdasarkan pemantauan SBLC real-time: Perakitan blok 4C mengalami deviasi 1.5 hari pada lintasan outfitting piping. Mengacu pada SOP-MAR-2026-V2.4, status masih dalam ambang toleransi aman (< 3 hari).',
-          'text',
-          { agent_role: 'Maritime Production Planner' }
-        );
-      }, 1000);
-    } else if (lower.includes('promptql') || lower.includes('query') || lower.includes('harga') || lower.includes('material')) {
-      setTimeout(async () => {
-        await sendAgentMessage(
-          'Echo',
-          'FETCH TOP 5 procurement_items { item_name, budgeted_cost, actual_cost, variance_percentage } WHERE project = "HULL-2026-A" ORDER BY variance_percentage DESC',
-          'code',
-          { executed_by: 'Echo PromptQL Engine', execution_time_ms: 118 }
-        );
-      }, 1200);
-    } else if (lower.includes('kri') || lower.includes('risiko') || lower.includes('risk') || lower.includes('sop')) {
-      setTimeout(async () => {
-        await sendAgentMessage(
-          'Iris',
-          'Analisis Risiko Operasional: KRI Score untuk keterlambatan pengadaan komponen listrik berada pada indikator AMBER (Moderat). Direkomendasikan melakukan re-scheduling sekuens di Dockyard B.',
-          'text',
-          { agent_role: 'Quality & Operational Risk Analyst' }
-        );
-      }, 1100);
+    const { data, error } = await supabase.from('messages').insert([msgObj]).select();
+    if (!error && data) {
+      setMessages((prev) => [...prev, data[0]]);
+      setNewMessage('');
     }
   };
-
-  // Handler Quick Action
-  const handleQuickAction = (promptText: string) => {
-    setActiveView('chat');
-    setInputText(promptText);
-  };
-
-  const activeChannel = channels.find(c => c.id === activeChannelId);
 
   return (
-    <div className="flex h-screen bg-slate-950 text-slate-100 overflow-hidden font-sans">
-      {/* SIDEBAR COMPONENT */}
-      <Sidebar
-        channels={channels}
-        agents={agents}
-        activeChannelId={activeChannelId}
-        selectedKnowledgeCategory={selectedKnowledgeCategory}
-        onSelectChannel={(id) => {
-          setActiveChannelId(id);
-          setActiveView('chat');
-        }}
-        onOpenAgents={() => setActiveView('agents')}
-        onOpenKnowledge={handleOpenKnowledge}
-        onNewChannel={() => alert('Modal Tambah Channel')}
-        onQuickAction={handleQuickAction}
-        collapsed={collapsed}
-      />
+    <div className="flex h-screen bg-slate-950 text-slate-100 font-sans overflow-hidden">
+      
+      {/* SIDEBAR NAVIGATION */}
+      <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between">
+        <div>
+          {/* Logo / Header Workspace */}
+          <div className="p-4 border-b border-slate-800 flex items-center gap-2">
+            <div className="w-3 h-3 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="font-extrabold text-sm tracking-wider text-slate-100">
+              SBLC WORKSPACE
+            </span>
+          </div>
+
+          {/* List Channel */}
+          <div className="p-3 space-y-1">
+            <div className="text-[10px] font-bold text-slate-500 uppercase px-3 py-1 tracking-wider">
+              Channels
+            </div>
+            {channels.map((channel) => {
+              const IconComp = iconMap[channel.icon] || Hash;
+              const isActive = channel.id === activeChannelId;
+              return (
+                <button
+                  key={channel.id}
+                  onClick={() => setActiveChannelId(channel.id)}
+                  className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${
+                    isActive
+                      ? 'bg-blue-600/20 text-blue-400 border border-blue-500/30'
+                      : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-200'
+                  }`}
+                >
+                  <IconComp size={15} />
+                  <span className="truncate"># {channel.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* User Info / Footer Sidebar */}
+        <div className="p-4 border-t border-slate-800 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-xs text-white">
+            AW
+          </div>
+          <div className="flex flex-col">
+            <span className="text-xs font-semibold text-slate-200">Asih Winarti</span>
+            <span className="text-[10px] text-slate-400">PMO / Planner</span>
+          </div>
+        </div>
+      </aside>
 
       {/* MAIN CONTENT AREA */}
-      <div className="flex-1 flex flex-col h-full min-w-0 bg-slate-900">
+      <main className="flex-1 flex flex-col overflow-hidden bg-slate-900/50">
         
-        {/* VIEW 1: CHAT ROOM / CHANNELS */}
-        {activeView === 'chat' && (
-          <div className="flex-1 flex flex-col h-full min-h-0">
-            {/* Header Channel */}
-            <div className="px-6 py-4 border-b border-slate-800 bg-slate-950/50 flex items-center justify-between shrink-0">
-              <div>
-                <h2 className="text-base font-semibold text-white flex items-center gap-2">
-                  <span className="text-slate-500">#</span> {activeChannel?.name || 'pilih-channel'}
-                </h2>
-                <p className="text-xs text-slate-400 mt-0.5">{activeChannel?.description || 'Diskusi proyek & monitoring SBLC'}</p>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-slate-400 bg-slate-800/60 px-3 py-1.5 rounded-full border border-slate-700">
-                <Sparkles size={13} className="text-blue-400" />
-                <span>PromptQL Connected</span>
-              </div>
+        {/* TOP BAR / NAVIGATION HEADER (Sesuai Screenshot kanban.pro) */}
+        <header className="bg-slate-950 border-b border-slate-800 px-6 py-3 flex flex-col gap-3">
+          
+          {/* Baris 1: Brand & Search Input */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-blue-500 font-mono font-bold text-base">&gt;_</span>
+              <h1 className="font-bold text-base tracking-wide text-slate-100 font-mono">
+                kanban<span className="text-blue-400">.pro</span>
+              </h1>
+              <span className="text-xs text-slate-500 font-mono ml-2">local-first board</span>
             </div>
 
-            {/* Area Pesan Chat */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
-              {messagesLoading ? (
-                <div className="text-center text-slate-500 text-sm py-10">Memuat riwayat percakapan...</div>
-              ) : messages.length === 0 ? (
-                <div className="text-center text-slate-500 text-sm py-10">
-                  Belum ada pesan di channel <strong className="text-slate-300">#{activeChannel?.name}</strong>. Ketik pesan di bawah untuk memulai!
-                </div>
+            {/* Input Search */}
+            <div className="relative w-72">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={14} />
+              <input 
+                type="text" 
+                placeholder="Cari tugas..." 
+                className="w-full bg-slate-900 border border-slate-800 rounded-lg pl-9 pr-8 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-blue-500/50"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 border border-slate-700 rounded px-1.5 py-0.5 text-[9px] text-slate-400 font-mono">
+                /
+              </span>
+            </div>
+          </div>
+
+          {/* Baris 2: Tabs (Board, List, Timeline, Dashboard) */}
+          <div className="flex items-center gap-6 text-xs font-medium border-b border-slate-800/80 -mb-3 pb-2">
+            <button 
+              onClick={() => setActiveTab('board')}
+              className={`flex items-center gap-1.5 pb-2 border-b-2 transition-colors ${
+                activeTab === 'board' ? 'border-blue-500 text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <LayoutGrid size={14} /> Board
+            </button>
+
+            <button 
+              onClick={() => setActiveTab('list')}
+              className={`flex items-center gap-1.5 pb-2 border-b-2 transition-colors ${
+                activeTab === 'list' ? 'border-blue-500 text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <ListIcon size={14} /> List
+            </button>
+
+            <button 
+              onClick={() => setActiveTab('timeline')}
+              className={`flex items-center gap-1.5 pb-2 border-b-2 transition-colors ${
+                activeTab === 'timeline' ? 'border-blue-500 text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Clock size={14} /> Timeline
+            </button>
+
+            <button 
+              onClick={() => setActiveTab('dashboard')}
+              className={`flex items-center gap-1.5 pb-2 border-b-2 transition-colors ${
+                activeTab === 'dashboard' ? 'border-blue-500 text-blue-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <BarChart2 size={14} /> Dashboard
+            </button>
+          </div>
+
+          {/* Baris 3: Indikator Project Tag */}
+          <div className="flex items-center gap-2 pt-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            <span className="font-mono text-xs text-slate-300 font-semibold">
+              sblc-2026-milestones
+            </span>
+            <span className="text-xs text-slate-500 font-mono">.kanban</span>
+          </div>
+        </header>
+
+        {/* TAMPILAN KONTEN UTAMA */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          
+          {/* TAB DASHBOARD: MENAMPILKAN DIAGRAM MILESTONE */}
+          {activeTab === 'dashboard' && <MilestoneDashboard />}
+
+          {/* TAMPILAN TAB LAIN (Halaman Sementara) */}
+          {activeTab !== 'dashboard' && (
+            <div className="h-64 flex flex-col items-center justify-center border border-dashed border-slate-800 rounded-xl text-slate-500 text-xs">
+              <span>Halaman <strong className="text-slate-300 capitalize">{activeTab}</strong> sedang dikembangkan</span>
+            </div>
+          )}
+
+          {/* SKETSA AREA INTERAKSI CHAT / REALTIME MESSAGES (SUPABASE INTEGRATED) */}
+          <div className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-5 shadow-xl space-y-4">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Hash size={16} className="text-blue-400" />
+                <span className="text-xs font-bold text-slate-200">
+                  {channels.find(c => c.id === activeChannelId)?.name || 'sblc-shipbuilding-planning'}
+                </span>
+              </div>
+              <span className="text-[10px] text-slate-500 font-mono">Supabase Realtime Sync</span>
+            </div>
+
+            {/* List Pesan Chat */}
+            <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+              {messages.length === 0 ? (
+                <div className="text-xs text-slate-500 italic py-2">Belum ada pesan di channel ini.</div>
               ) : (
                 messages.map((msg) => (
-                  <div 
-                    key={msg.id} 
-                    className={`flex gap-3 max-w-3xl ${msg.sender_type === 'user' ? 'ml-auto flex-row-reverse' : ''}`}
-                  >
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-                      msg.sender_type === 'user' 
-                        ? 'bg-blue-600 text-white font-medium text-xs' 
-                        : 'bg-indigo-600/20 border border-indigo-500/30 text-indigo-400'
-                    }`}>
-                      {msg.sender_type === 'user' ? 'AW' : <Bot size={16} />}
+                  <div key={msg.id} className="flex items-start gap-3 text-xs">
+                    <div className={`p-1.5 rounded-lg ${msg.sender_type === 'agent' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-blue-500/10 text-blue-400'}`}>
+                      {msg.sender_type === 'agent' ? <Bot size={14} /> : <User size={14} />}
                     </div>
-
-                    <div className={`flex flex-col ${msg.sender_type === 'user' ? 'items-end' : 'items-start'}`}>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-semibold text-slate-300">{msg.sender_name}</span>
+                    <div className="space-y-0.5 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-slate-200">{msg.sender_name}</span>
                         <span className="text-[10px] text-slate-500">
                           {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
-
-                      <div className={`p-3.5 rounded-xl text-sm leading-relaxed ${
-                        msg.sender_type === 'user'
-                          ? 'bg-blue-600 text-white rounded-tr-none'
-                          : 'bg-slate-800/90 border border-slate-700/60 text-slate-200 rounded-tl-none'
-                      }`}>
-                        {msg.message_type === 'code' ? (
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between text-xs text-purple-300 font-mono border-b border-slate-700 pb-1">
-                              <span>PromptQL Query</span>
-                              <Code size={12} />
-                            </div>
-                            <pre className="p-2.5 bg-slate-950 rounded border border-slate-800 text-xs text-emerald-400 font-mono overflow-x-auto">
-                              {msg.content}
-                            </pre>
-                          </div>
-                        ) : (
-                          <p>{msg.content}</p>
-                        )}
-                      </div>
+                      <p className="text-slate-300 leading-relaxed bg-slate-900/60 p-2 rounded border border-slate-800/50">
+                        {msg.content}
+                      </p>
                     </div>
                   </div>
                 ))
               )}
-              <div ref={chatEndRef} />
             </div>
 
             {/* Input Chat */}
-            <form onSubmit={handleSendMessage} className="p-4 border-t border-slate-800 bg-slate-950/30 shrink-0">
-              <div className="relative flex items-center">
-                <input
-                  type="text"
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  placeholder={`Ketik pesan ke #${activeChannel?.name || 'channel'} (Sebut @Atlas, @Echo, atau @Iris)...`}
-                  className="w-full bg-slate-800/80 border border-slate-700/80 rounded-xl pl-4 pr-12 py-3 text-sm text-slate-100 placeholder:text-slate-500 focus:outline-none focus:border-blue-500 transition-colors"
-                />
-                <button
-                  type="submit"
-                  disabled={!inputText.trim()}
-                  className="absolute right-2 p-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 text-white rounded-lg transition-colors"
-                >
-                  <Send size={16} />
-                </button>
-              </div>
+            <form onSubmit={handleSendMessage} className="flex gap-2 pt-2">
+              <input
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Kirim instruksi atau pertanyaan ke agen..."
+                className="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-100 focus:outline-none focus:border-blue-500/50"
+              />
+              <button
+                type="submit"
+                className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
+              >
+                <Send size={13} /> Kirim
+              </button>
             </form>
           </div>
-        )}
 
-        {/* VIEW 2: KNOWLEDGE BRAIN VIEW */}
-        {activeView === 'knowledge' && (
-          <div className="flex-1 flex flex-col h-full overflow-y-auto p-8">
-            <div className="max-w-5xl w-full mx-auto space-y-6">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-5">
-                <div>
-                  <h2 className="text-2xl font-bold text-white flex items-center gap-2.5">
-                    <Brain className="text-emerald-400" size={28} />
-                    <span>Knowledge Brain</span>
-                  </h2>
-                  <p className="text-sm text-slate-400 mt-1">
-                    Kategori Terpilih: <span className="text-blue-400 font-medium">{selectedKnowledgeCategory}</span>
-                  </p>
-                </div>
-                <button 
-                  onClick={() => {
-                    const title = prompt('Judul Dokumen:');
-                    const content = prompt('Isi Ringkasan Dokumen:');
-                    if (title && content) {
-                      alert('Dokumen berhasil disimpan ke Knowledge Brain!');
-                    }
-                  }}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium rounded-lg flex items-center gap-2 transition-colors"
-                >
-                  <Plus size={16} />
-                  <span>Tambah Dokumen</span>
-                </button>
-              </div>
+        </div>
 
-              {knowledgeLoading ? (
-                <div className="text-center py-12 text-slate-500">Memuat item Knowledge Brain...</div>
-              ) : knowledgeItems.length === 0 ? (
-                <div className="p-8 text-center bg-slate-950/40 rounded-xl border border-slate-800 text-slate-400">
-                  Tidak ada dokumen ditemukan untuk kategori "{selectedKnowledgeCategory}".
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 gap-4">
-                  {knowledgeItems.map((item) => (
-                    <div 
-                      key={item.id} 
-                      className="p-5 bg-slate-950/60 border border-slate-800 hover:border-slate-700 rounded-xl transition-all space-y-3"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <FileText size={18} className="text-blue-400" />
-                          <h3 className="font-semibold text-slate-100 text-base">{item.title}</h3>
-                        </div>
-                        <span className="text-xs px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 font-mono border border-slate-700">
-                          {item.category}
-                        </span>
-                      </div>
-                      <p className="text-sm text-slate-300 leading-relaxed bg-slate-900/80 p-3.5 rounded-lg border border-slate-800/80">
-                        {item.content}
-                      </p>
-                      <div className="text-[11px] text-slate-500 flex items-center justify-between pt-1">
-                        <span>Diperbarui: {new Date(item.updated_at).toLocaleDateString()}</span>
-                        <span className="text-emerald-400 flex items-center gap-1">
-                          <CheckCircle2 size={12} /> Sync dengan PromptQL Engine
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* VIEW 3: AI AGENTS DIRECTORY */}
-        {activeView === 'agents' && (
-          <div className="flex-1 overflow-y-auto p-8">
-            <div className="max-w-5xl w-full mx-auto space-y-6">
-              <div className="border-b border-slate-800 pb-5">
-                <h2 className="text-2xl font-bold text-white flex items-center gap-2.5">
-                  <Users className="text-blue-400" size={28} />
-                  <span>AI Agents & Division of Responsibility</span>
-                </h2>
-                <p className="text-sm text-slate-400 mt-1">
-                  Daftar agen AI aktif beserta tugas spesifik dalam ekosistem manufaktur & PromptQL.
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {agents.map((ag) => (
-                  <div key={ag.id} className="p-5 bg-slate-950/60 border border-slate-800 rounded-xl space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div 
-                          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" 
-                          style={{ background: `${ag.avatar_color}20`, border: `1.5px solid ${ag.avatar_color}` }}
-                        >
-                          <Bot size={20} style={{ color: ag.avatar_color }} />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-white">{ag.name}</h3>
-                          <p className="text-xs text-slate-400">{ag.role}</p>
-                        </div>
-                      </div>
-                      <span className={`w-2.5 h-2.5 rounded-full ${ag.status === 'active' ? 'bg-emerald-400' : 'bg-amber-400'}`} />
-                    </div>
-                    <div className="p-3 bg-slate-900 rounded-lg text-xs text-slate-300 leading-relaxed border border-slate-800">
-                      <strong>System Prompt:</strong> {ag.system_prompt}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-      </div>
+      </main>
     </div>
   );
 }
