@@ -47,16 +47,17 @@ export default function App() {
   const [activeChannel, setActiveChannel] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  
+  // State Navigasi Sidebar Kanan (Agents vs Brain)
   const [rightTab, setRightTab] = useState<'agents' | 'brain'>('agents');
   const [isExecutingPromptQL, setIsExecutingPromptQL] = useState(false);
 
   // State Quick Actions Modal
   const [isQuickActionsOpen, setIsQuickActionsOpen] = useState(false);
 
-  // State dinamis untuk data SBLC
+  // State dinamis data SBLC
   const [blocksData, setBlocksData] = useState<any[]>(sblcDataDummy);
 
-  // Load Initial Channels & Agents
   useEffect(() => {
     async function loadData() {
       const { data: channelsData } = await supabase.from('channels').select('*').order('created_at', { ascending: true });
@@ -68,7 +69,6 @@ export default function App() {
     loadData();
   }, []);
 
-  // Fetch Messages saat activeChannel berubah
   useEffect(() => {
     async function fetchMessages() {
       if (!activeChannel) return;
@@ -82,7 +82,6 @@ export default function App() {
     fetchMessages();
   }, [activeChannel]);
 
-  // Eksekusi Simulasi PromptQL Strategis
   const handleRunPromptQL = () => {
     if (!activeChannel) return;
     setIsExecutingPromptQL(true);
@@ -113,7 +112,6 @@ export default function App() {
     }, 1200);
   };
 
-  // Eksekusi Pilihan Quick Action
   const handleSelectQuickAction = (actionText: string) => {
     setIsQuickActionsOpen(false);
     if (!activeChannel) {
@@ -122,7 +120,6 @@ export default function App() {
     setNewMessage(actionText);
   };
 
-  // KIRIM PESAN & DETEKSI OTOMATIS AGENT
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !activeChannel) return;
@@ -143,7 +140,6 @@ export default function App() {
 
     const lowerText = userText.toLowerCase();
 
-    // AKSI 1: Input Data Blok
     if (
       activeChannel.name === 'engineering' && 
       (lowerText.includes('input data') || lowerText.includes('input blok') || lowerText.includes('+ input'))
@@ -169,7 +165,6 @@ export default function App() {
       return;
     }
 
-    // AKSI 2: Edit Data Blok
     if (
       activeChannel.name === 'engineering' && 
       (lowerText.includes('edit data') || lowerText.includes('edit blok') || lowerText.includes('- edit'))
@@ -195,7 +190,6 @@ export default function App() {
       return;
     }
 
-    // AKSI 3: Parsing Input Data
     if (userText.includes('blockId:') && userText.includes('kriIndicator:')) {
       try {
         const blockIdMatch = userText.match(/blockId:\s*['"]([^'"]+)['"]/);
@@ -254,7 +248,6 @@ export default function App() {
       }
     }
 
-    // Respons Default AI
     setTimeout(() => {
       const aiReply = {
         id: (Date.now() + 1).toString(),
@@ -280,7 +273,7 @@ export default function App() {
                 <Zap size={18} />
                 <h3 className="font-bold text-sm text-white">Quick Actions</h3>
               </div>
-              <button onClick={() => setIsQuickActionsOpen(false)} className="text-slate-500 hover:text-slate-300">
+              <button onClick={() => setIsQuickActionsOpen(false)} className="text-slate-500 hover:text-slate-300 cursor-pointer">
                 <X size={16} />
               </button>
             </div>
@@ -290,7 +283,7 @@ export default function App() {
             <div className="space-y-2">
               <button 
                 onClick={() => handleSelectQuickAction('+ Input Data Blok')}
-                className="w-full text-left p-3 rounded-lg bg-[#161f33] hover:bg-blue-600/20 border border-slate-800 hover:border-blue-500/50 transition-all flex items-center justify-between group"
+                className="w-full text-left p-3 rounded-lg bg-[#161f33] hover:bg-blue-600/20 border border-slate-800 hover:border-blue-500/50 transition-all flex items-center justify-between group cursor-pointer"
               >
                 <div>
                   <div className="text-xs font-semibold text-slate-200 group-hover:text-blue-400">+ Input Data Blok SBLC</div>
@@ -301,7 +294,7 @@ export default function App() {
 
               <button 
                 onClick={() => handleSelectQuickAction('- Edit Data Blok')}
-                className="w-full text-left p-3 rounded-lg bg-[#161f33] hover:bg-amber-600/20 border border-slate-800 hover:border-amber-500/50 transition-all flex items-center justify-between group"
+                className="w-full text-left p-3 rounded-lg bg-[#161f33] hover:bg-amber-600/20 border border-slate-800 hover:border-amber-500/50 transition-all flex items-center justify-between group cursor-pointer"
               >
                 <div>
                   <div className="text-xs font-semibold text-slate-200 group-hover:text-amber-400">- Edit Data Blok SBLC</div>
@@ -312,7 +305,7 @@ export default function App() {
 
               <button 
                 onClick={() => handleSelectQuickAction('Jalankan analisis risiko KRI terkini')}
-                className="w-full text-left p-3 rounded-lg bg-[#161f33] hover:bg-emerald-600/20 border border-slate-800 hover:border-emerald-500/50 transition-all flex items-center justify-between group"
+                className="w-full text-left p-3 rounded-lg bg-[#161f33] hover:bg-emerald-600/20 border border-slate-800 hover:border-emerald-500/50 transition-all flex items-center justify-between group cursor-pointer"
               >
                 <div>
                   <div className="text-xs font-semibold text-slate-200 group-hover:text-emerald-400">⚡ Ringkasan Risiko KRI Terbaru</div>
@@ -352,11 +345,10 @@ export default function App() {
             />
           </div>
 
-          {/* Quick Actions Button (Aktif) */}
           <div className="space-y-0.5 pt-1">
             <button 
               onClick={() => setIsQuickActionsOpen(true)}
-              className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-slate-300 bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 transition-all cursor-pointer"
+              className="w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-amber-300 bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 transition-all cursor-pointer"
             >
               <Zap size={14} className="text-amber-400" />
               <span>Quick Actions</span>
@@ -378,7 +370,7 @@ export default function App() {
                 <button
                   key={c}
                   onClick={() => setActiveChannel({ id: c, name: c })}
-                  className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                  className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
                     activeChannel?.name === c
                       ? 'bg-blue-600/20 text-blue-400 font-semibold'
                       : 'text-slate-400 hover:bg-slate-800/40 hover:text-slate-200'
@@ -396,7 +388,7 @@ export default function App() {
                   <button
                     key={channel.id}
                     onClick={() => setActiveChannel(channel)}
-                    className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors cursor-pointer ${
                       isActive
                         ? 'bg-blue-600/20 text-blue-400 font-semibold'
                         : 'text-slate-400 hover:bg-slate-800/40 hover:text-slate-200'
@@ -409,7 +401,7 @@ export default function App() {
               })
             )}
 
-            <button className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors">
+            <button className="w-full flex items-center gap-2 px-2.5 py-1.5 text-xs text-slate-500 hover:text-slate-300 transition-colors cursor-pointer">
               <Plus size={14} />
               <span>Add channel</span>
             </button>
@@ -470,7 +462,7 @@ export default function App() {
             </p>
             <button 
               onClick={() => setActiveChannel({ id: 'engineering', name: 'engineering' })}
-              className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+              className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors flex items-center gap-2 cursor-pointer"
             >
               <Hash size={14} /> Open #engineering Channel
             </button>
@@ -487,7 +479,7 @@ export default function App() {
               <button 
                 onClick={handleRunPromptQL}
                 disabled={isExecutingPromptQL}
-                className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5 shadow-md shadow-emerald-900/30 disabled:opacity-50"
+                className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5 shadow-md shadow-emerald-900/30 disabled:opacity-50 cursor-pointer"
               >
                 <Play size={12} />
                 <span>{isExecutingPromptQL ? 'Executing PromptQL...' : 'Execute PromptQL Pipeline'}</span>
@@ -566,7 +558,7 @@ export default function App() {
                 />
                 <button 
                   type="submit" 
-                  className="absolute right-1.5 bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1"
+                  className="absolute right-1.5 bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-1.5 rounded-md text-xs font-medium transition-colors flex items-center gap-1 cursor-pointer"
                 >
                   <Send size={12} /> Kirim
                 </button>
@@ -577,20 +569,30 @@ export default function App() {
 
       </main>
 
-      {/* 3. SIDEBAR KANAN */}
+      {/* 3. SIDEBAR KANAN (AKSI TAB AGENTS / BRAIN) */}
       <aside className="w-80 bg-[#0d121f] border-l border-slate-800/60 flex flex-col shrink-0">
         
         <div className="p-3 border-b border-slate-800/60 flex items-center justify-between">
           <div className="flex items-center gap-1 bg-[#13192b] p-0.5 rounded-lg border border-slate-800/60 text-xs">
             <button 
+              type="button"
               onClick={() => setRightTab('agents')}
-              className={`px-3 py-1 rounded-md font-medium transition-colors ${rightTab === 'agents' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+              className={`px-3 py-1 rounded-md font-medium transition-all cursor-pointer ${
+                rightTab === 'agents' 
+                  ? 'bg-blue-600 text-white shadow-sm' 
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
             >
               Agents
             </button>
             <button 
+              type="button"
               onClick={() => setRightTab('brain')}
-              className={`px-3 py-1 rounded-md font-medium transition-colors ${rightTab === 'brain' ? 'bg-slate-800 text-white' : 'text-slate-400 hover:text-slate-200'}`}
+              className={`px-3 py-1 rounded-md font-medium transition-all cursor-pointer ${
+                rightTab === 'brain' 
+                  ? 'bg-blue-600 text-white shadow-sm' 
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
             >
               Brain
             </button>
@@ -602,7 +604,7 @@ export default function App() {
           
           {rightTab === 'agents' ? (
             <>
-              <button className="w-full border border-dashed border-slate-800 hover:border-slate-700 bg-[#101625] text-slate-300 rounded-lg py-2.5 px-3 text-xs font-medium flex items-center justify-center gap-2 transition-colors">
+              <button className="w-full border border-dashed border-slate-800 hover:border-slate-700 bg-[#101625] text-slate-300 rounded-lg py-2.5 px-3 text-xs font-medium flex items-center justify-center gap-2 transition-colors cursor-pointer">
                 <PlusCircle size={14} className="text-slate-400" />
                 <span>Deploy new agent</span>
               </button>
@@ -686,7 +688,7 @@ export default function App() {
                 </span>
               </div>
 
-              <button className="w-full border border-dashed border-slate-800 hover:border-slate-700 bg-[#101625] text-slate-300 rounded-lg py-2 px-3 text-xs font-medium flex items-center justify-center gap-2 transition-colors">
+              <button className="w-full border border-dashed border-slate-800 hover:border-slate-700 bg-[#101625] text-slate-300 rounded-lg py-2 px-3 text-xs font-medium flex items-center justify-center gap-2 transition-colors cursor-pointer">
                 <Plus size={14} className="text-slate-400" />
                 <span>Upload Knowledge Document</span>
               </button>
