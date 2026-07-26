@@ -5,7 +5,7 @@ import {
   Users, Settings, X, PlusCircle, Play, AlertTriangle, Database, CheckCircle2 
 } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
-import { sblcDataDummy, promptQLSimulations } from './mockData';
+import { sblcDataDummy, promptQLSimulations, channelInitialMessages } from './mockData';
 
 // Setup Supabase Client
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
@@ -69,15 +69,28 @@ export default function App() {
     loadData();
   }, []);
 
+  // Fetch & Synchronize Messages per Channel
   useEffect(() => {
     async function fetchMessages() {
       if (!activeChannel) return;
-      const { data } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('channel_id', activeChannel.id)
-        .order('created_at', { ascending: true });
-      if (data) setMessages(data);
+      const channelName = activeChannel.name;
+      const initialMsgs = channelInitialMessages[channelName] || [];
+
+      try {
+        const { data } = await supabase
+          .from('messages')
+          .select('*')
+          .eq('channel_id', activeChannel.id)
+          .order('created_at', { ascending: true });
+
+        if (data && data.length > 0) {
+          setMessages([...initialMsgs, ...data]);
+        } else {
+          setMessages(initialMsgs);
+        }
+      } catch (err) {
+        setMessages(initialMsgs);
+      }
     }
     fetchMessages();
   }, [activeChannel]);
@@ -92,7 +105,7 @@ export default function App() {
         channel_id: activeChannel.id,
         sender_type: 'user',
         sender_name: 'BaZain',
-        content: `RUN PROMPTQL: Jalankan analisis risiko SBLC & strategi mitigasi keterlambatan sekuens blok.`,
+        content: `RUN PROMPTQL: Jalankan pipeline analisis otomatis pada channel #${activeChannel.name}.`,
         created_at: new Date().toISOString()
       };
 
@@ -102,7 +115,7 @@ export default function App() {
         id: (Date.now() + 1).toString(),
         channel_id: activeChannel.id,
         sender_type: 'agent',
-        sender_name: 'PromptQL Orchestrator (Iris & Raffasya)',
+        sender_name: 'PromptQL Orchestrator',
         content: agentResponseText,
         created_at: new Date().toISOString()
       };
@@ -522,7 +535,7 @@ export default function App() {
             <div className="flex-1 overflow-y-auto p-6 space-y-4">
               {messages.length === 0 ? (
                 <div className="text-xs text-slate-500 italic py-8 text-center">
-                  Belum ada percakapan di #{activeChannel.name}. Klik <strong>Execute PromptQL Pipeline</strong> atau kirim pesan <code>+ Input Data Blok</code>.
+                  Belum ada percakapan di #{activeChannel.name}. Klik <strong>Execute PromptQL Pipeline</strong> atau kirim pesan.
                 </div>
               ) : (
                 messages.map((msg) => (
@@ -690,35 +703,27 @@ export default function App() {
 
               <button className="w-full border border-dashed border-slate-800 hover:border-slate-700 bg-[#101625] text-slate-300 rounded-lg py-2 px-3 text-xs font-medium flex items-center justify-center gap-2 transition-colors cursor-pointer">
                 <Plus size={14} className="text-slate-400" />
-                <span>Upload Knowledge Document</span>
+                <span>Add Knowledge Base</span>
               </button>
 
-              {brainKnowledgeList.map((kb) => (
-                <div key={kb.id} className="bg-[#101625] border border-slate-800/80 rounded-xl p-3.5 space-y-2 hover:border-purple-500/40 transition-colors">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2">
-                      <FileText size={14} className="text-purple-400 shrink-0" />
-                      <span className="text-xs font-bold text-slate-200">{kb.title}</span>
-                    </div>
+              {brainKnowledgeList.map((item) => (
+                <div key={item.id} className="bg-[#101625] border border-slate-800/80 rounded-xl p-3 space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-white">{item.title}</span>
+                    <span className="text-[9px] text-slate-500">{item.updatedAt}</span>
                   </div>
-
-                  <p className="text-[11px] text-slate-400 leading-relaxed">
-                    {kb.snippet}
+                  <span className="inline-block text-[9px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-1.5 py-0.5 rounded">
+                    {item.category}
+                  </span>
+                  <p className="text-[10px] text-slate-400 leading-relaxed pt-1">
+                    {item.snippet}
                   </p>
-
-                  <div className="pt-2 border-t border-slate-800/50 flex items-center justify-between text-[10px] text-slate-500">
-                    <span className="bg-slate-800/80 text-slate-300 px-1.5 py-0.5 rounded text-[9px]">
-                      {kb.category}
-                    </span>
-                    <span>{kb.updatedAt}</span>
-                  </div>
                 </div>
               ))}
             </div>
           )}
 
         </div>
-
       </aside>
 
     </div>
