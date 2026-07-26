@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Hash, Layers, Code, Box, TrendingUp, BarChart, BookOpen, Send, Bot, User, 
   Brain, MessageSquare, FileText, MoreVertical, Sparkles, Search, Plus, Zap, 
-  Users, Settings, X, PlusCircle, Play, AlertTriangle, Database, CheckCircle2 
+  Users, Settings, X, PlusCircle, Play, AlertTriangle, Database, CheckCircle2, Activity
 } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 import { sblcDataDummy, promptQLSimulations, channelInitialMessages } from './mockData';
@@ -16,7 +16,7 @@ const iconMap: Record<string, React.ElementType> = {
   Layers, Hash, Code, Box, TrendingUp, BarChart, BookOpen
 };
 
-// Data Dummy Knowledge Brain
+// Data Knowledge Brain
 const brainKnowledgeList = [
   {
     id: 'kb-1',
@@ -48,7 +48,7 @@ export default function App() {
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState('');
   
-  // State Navigasi Sidebar Kanan (Agents vs Brain)
+  // State Navigasi Sidebar Kanan
   const [rightTab, setRightTab] = useState<'agents' | 'brain'>('agents');
   const [isExecutingPromptQL, setIsExecutingPromptQL] = useState(false);
 
@@ -69,7 +69,7 @@ export default function App() {
     loadData();
   }, []);
 
-  // Fetch & Synchronize Messages per Channel (Diperbaiki agar tidak terduplikasi)
+  // Fetch & Synchronize Messages per Channel
   useEffect(() => {
     async function fetchMessages() {
       if (!activeChannel) return;
@@ -170,7 +170,8 @@ export default function App() {
             `delayDays: 8,\n` +
             `riskLevel: 'High',\n` +
             `kriIndicator: 'Keterlambatan Supply Material Plate',\n` +
-            `costImpactUSD: 18000`,
+            `costImpactUSD: 18000,\n` +
+            `stage: 'Fabrikasi'`,
           created_at: new Date().toISOString()
         };
         setMessages((prev) => [...prev, botTemplate]);
@@ -190,12 +191,13 @@ export default function App() {
           sender_name: 'Raffasya (Process Agent)',
           content: `Silakan salin templat di bawah ini, sesuaikan nilainya, lalu kirimkan kembali ke chat:\n\n` +
             `blockId: 'Blok 3B (Painting)',\n` +
-            `plannedProgress: 90,\n` +
-            `actualProgress: 78,\n` +
-            `delayDays: 7,\n` +
-            `riskLevel: 'High',\n` +
-            `kriIndicator: 'Keterlambatan Pipa Main Engine',\n` +
-            `costImpactUSD: 22000`,
+            `plannedProgress: 100,\n` +
+            `actualProgress: 100,\n` +
+            `delayDays: 0,\n` +
+            `riskLevel: 'Low',\n` +
+            `kriIndicator: 'Painting Selesai 100%',\n` +
+            `costImpactUSD: 0,\n` +
+            `stage: 'Painting'`,
           created_at: new Date().toISOString()
         };
         setMessages((prev) => [...prev, editTemplate]);
@@ -212,6 +214,7 @@ export default function App() {
         const riskMatch = userText.match(/riskLevel:\s*['"]([^'"]+)['"]/);
         const kriMatch = userText.match(/kriIndicator:\s*['"]([^'"]+)['"]/);
         const costMatch = userText.match(/costImpactUSD:\s*(\d+)/);
+        const stageMatch = userText.match(/stage:\s*['"]([^'"]+)['"]/);
 
         if (blockIdMatch && kriMatch) {
           const newBlockObj = {
@@ -222,6 +225,7 @@ export default function App() {
             riskLevel: riskMatch ? riskMatch[1] : 'Medium',
             kriIndicator: kriMatch[1],
             costImpactUSD: costMatch ? Number(costMatch[1]) : 0,
+            stage: stageMatch ? stageMatch[1] : 'Assembly'
           };
 
           let isUpdated = false;
@@ -234,7 +238,7 @@ export default function App() {
             if (existsIndex !== -1) {
               isUpdated = true;
               const updatedList = [...prev];
-              updatedList[existsIndex] = newBlockObj;
+              updatedList[existsIndex] = { ...updatedList[existsIndex], ...newBlockObj };
               return updatedList;
             } else {
               return [...prev, newBlockObj];
@@ -248,8 +252,8 @@ export default function App() {
               sender_type: 'agent',
               sender_name: 'Iris (Data Agent)',
               content: isUpdated 
-                ? `✏️ Data **${newBlockObj.blockId}** berhasil diperbarui pada SBLC Risk Stream!`
-                : `✅ Data **${newBlockObj.blockId}** berhasil ditambahkan ke dalam SBLC Risk Stream!`,
+                ? `✏️ Data **${newBlockObj.blockId}** berhasil diperbarui pada SBLC Risk Stream & Visual Progress Kapal!`
+                : `✅ Data **${newBlockObj.blockId}** berhasil ditambahkan ke dalam SBLC Risk Stream & Visual Progress Kapal!`,
               created_at: new Date().toISOString()
             };
             setMessages((prev) => [...prev, botConfirm]);
@@ -272,6 +276,24 @@ export default function App() {
       };
       setMessages((prev) => [...prev, aiReply]);
     }, 1000);
+  };
+
+  // Kumpulan blok kapal untuk representasi visual lambung kapal
+  const hullBlocks = [
+    { id: '1A', stage: 'Fabrikasi' }, { id: '1B', stage: 'Fabrikasi' }, { id: '2A', stage: 'Fabrikasi' }, { id: '2B', stage: 'Fabrikasi' },
+    { id: '3A', stage: 'Assembly' }, { id: '3B', stage: 'Painting' }, { id: '4A', stage: 'Assembly' }, { id: '4B', stage: 'Fabrikasi' },
+    { id: '4C', stage: 'Erection' }, { id: '5A', stage: 'Assembly' }, { id: '5B', stage: 'Erection' }, { id: '6A', stage: 'Erection' },
+    { id: '6B', stage: 'Fabrikasi' }, { id: '7A', stage: 'Painting' }, { id: '7B', stage: 'Painting' }
+  ];
+
+  const getStageColor = (stageName: string) => {
+    switch(stageName) {
+      case 'Fabrikasi': return 'bg-red-600 text-white border-red-500';
+      case 'Assembly': return 'bg-emerald-500 text-white border-emerald-400';
+      case 'Erection': return 'bg-yellow-400 text-slate-900 border-yellow-300 font-bold';
+      case 'Painting': return 'bg-blue-600 text-white border-blue-500';
+      default: return 'bg-slate-700 text-slate-300 border-slate-600';
+    }
   };
 
   return (
@@ -481,9 +503,9 @@ export default function App() {
             </button>
           </div>
         ) : (
-          <div className="flex-1 flex flex-col h-full">
+          <div className="flex-1 flex flex-col h-full overflow-hidden">
             
-            <div className="px-6 py-3.5 border-b border-slate-800/60 flex items-center justify-between">
+            <div className="px-6 py-3.5 border-b border-slate-800/60 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
                 <Hash size={18} className="text-blue-400" />
                 <h2 className="text-sm font-bold text-white">{activeChannel.name}</h2>
@@ -499,8 +521,8 @@ export default function App() {
               </button>
             </div>
 
-            {/* CHANNEL CONTEXT BANNER (Memperjelas fungsi tiap Channel) */}
-            <div className="px-6 py-2 bg-[#101726] border-b border-slate-800/80 text-xs text-slate-400 flex items-center justify-between">
+            {/* CHANNEL CONTEXT BANNER */}
+            <div className="px-6 py-2 bg-[#101726] border-b border-slate-800/80 text-xs text-slate-400 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
                 <span>
@@ -516,35 +538,104 @@ export default function App() {
               </span>
             </div>
 
-            {/* TABEL DATA SBLC (Khusus Channel Engineering) */}
+            {/* SECTION KHUSUS ENGINEERING: VISUAL PROGRESS SHIPYARD & RISK CARDS */}
             {activeChannel.name === 'engineering' && (
-              <div className="bg-[#0f1524] border-b border-slate-800/80 p-4 space-y-2">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
-                    <AlertTriangle size={14} className="text-amber-400" />
-                    SBLC Real-Time Risk Data (Stream)
-                  </span>
-                  <span className="text-[10px] text-slate-500">Updated: Just Now</span>
-                </div>
-                <div className="grid grid-cols-3 gap-2 text-xs">
-                  {blocksData.map((item, idx) => (
-                    <div key={item.blockId || idx} className="bg-[#131a2d] p-2.5 rounded-lg border border-slate-800 space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-slate-200">{item.blockId}</span>
-                        <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold ${
-                          item.riskLevel === 'Critical' || item.riskLevel === 'High' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'
-                        }`}>
-                          {item.riskLevel}
-                        </span>
+              <div className="bg-[#0f1524] border-b border-slate-800/80 p-4 space-y-4 shrink-0 overflow-y-auto max-h-[360px]">
+                
+                {/* 1. VISUAL PROGRESS DIAGRAM KAPAL (TAMBAHAN SESUAI SPESIFIKASI DARI GAMBAR) */}
+                <div className="bg-[#12192c] p-3 rounded-xl border border-slate-800 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-200 flex items-center gap-2">
+                      <Activity size={15} className="text-cyan-400" />
+                      Visual Progress Sekuens Blok Hull Kapal (100% Stage Completed)
+                    </span>
+                    
+                    {/* LEGENDA STATUS TAHAPAN FABRIKASI */}
+                    <div className="flex items-center gap-3 text-[10px]">
+                      <div className="flex items-center gap-1">
+                        <span className="w-2.5 h-2.5 rounded bg-red-600 border border-red-400"></span>
+                        <span className="text-slate-300">Fabrikasi</span>
                       </div>
-                      <p className="text-[10px] text-slate-400">{item.kriIndicator}</p>
-                      <div className="text-[10px] text-slate-500 flex justify-between pt-1">
-                        <span>Delay: <strong className="text-slate-300">{item.delayDays} d</strong></span>
-                        <span>Impact: <strong className="text-red-400">${item.costImpactUSD ? item.costImpactUSD.toLocaleString() : 0}</strong></span>
+                      <div className="flex items-center gap-1">
+                        <span className="w-2.5 h-2.5 rounded bg-emerald-500 border border-emerald-300"></span>
+                        <span className="text-slate-300">Assembly</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="w-2.5 h-2.5 rounded bg-yellow-400 border border-yellow-200"></span>
+                        <span className="text-slate-300">Erection</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="w-2.5 h-2.5 rounded bg-blue-600 border border-blue-400"></span>
+                        <span className="text-slate-300">Painting</span>
                       </div>
                     </div>
-                  ))}
+                  </div>
+
+                  {/* MINI SHIP HULL BLOCKS LAYOUT (REPRESENTASI VISUAL STRUKTUR KAPAL) */}
+                  <div className="relative border border-slate-800/80 bg-[#0a0e1a] rounded-lg p-3">
+                    <div className="grid grid-cols-8 gap-1.5">
+                      {hullBlocks.map((blk) => {
+                        // Cek apakah ada override stage dari input user / blocksData
+                        const activeBlockData = blocksData.find(
+                          (d) => d.blockId.toLowerCase().includes(blk.id.toLowerCase())
+                        );
+                        const currentStage = activeBlockData?.stage || blk.stage;
+                        const isCompleted = activeBlockData ? activeBlockData.actualProgress === 100 : true;
+
+                        return (
+                          <div 
+                            key={blk.id}
+                            className={`p-2 rounded border transition-all text-center relative group cursor-pointer ${getStageColor(currentStage)}`}
+                          >
+                            <span className="text-[11px] font-black tracking-wider block">
+                              {blk.id}
+                            </span>
+                            <span className="text-[8px] opacity-80 uppercase block">
+                              {currentStage.substring(0, 4)}
+                            </span>
+                            {isCompleted && (
+                              <span className="absolute -top-1 -right-1 bg-emerald-400 text-slate-950 text-[8px] font-bold rounded-full w-3.5 h-3.5 flex items-center justify-center border border-slate-900">
+                                ✓
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
+
+                {/* 2. SBLC REAL-TIME RISK CARDS (DIBIARKAN DI BAWAH VISUAL PROGRESS) */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                      <AlertTriangle size={14} className="text-amber-400" />
+                      SBLC Real-Time Risk Data (Stream)
+                    </span>
+                    <span className="text-[10px] text-slate-500">Updated: Just Now</span>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 text-xs">
+                    {blocksData.map((item, idx) => (
+                      <div key={item.blockId || idx} className="bg-[#131a2d] p-2.5 rounded-lg border border-slate-800 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-slate-200">{item.blockId}</span>
+                          <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold ${
+                            item.riskLevel === 'Critical' || item.riskLevel === 'High' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'
+                          }`}>
+                            {item.riskLevel}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-slate-400">{item.kriIndicator}</p>
+                        <div className="text-[10px] text-slate-500 flex justify-between pt-1">
+                          <span>Delay: <strong className="text-slate-300">{item.delayDays} d</strong></span>
+                          <span>Impact: <strong className="text-red-400">${item.costImpactUSD ? item.costImpactUSD.toLocaleString() : 0}</strong></span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
               </div>
             )}
 
@@ -582,7 +673,7 @@ export default function App() {
             </div>
 
             {/* Form Input */}
-            <form onSubmit={handleSendMessage} className="p-4 border-t border-slate-800/60">
+            <form onSubmit={handleSendMessage} className="p-4 border-t border-slate-800/60 shrink-0">
               <div className="relative flex items-center">
                 <input
                   type="text"
@@ -604,7 +695,7 @@ export default function App() {
 
       </main>
 
-      {/* 3. SIDEBAR KANAN (AKSI TAB AGENTS / BRAIN) */}
+      {/* 3. SIDEBAR KANAN */}
       <aside className="w-80 bg-[#0d121f] border-l border-slate-800/60 flex flex-col shrink-0">
         
         <div className="p-3 border-b border-slate-800/60 flex items-center justify-between">
@@ -711,7 +802,7 @@ export default function App() {
               </div>
             </>
           ) : (
-            /* TAB BRAIN (KNOWLEDGE BRAIN) */
+            /* TAB BRAIN */
             <div className="space-y-3">
               <div className="flex items-center justify-between pb-1">
                 <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
