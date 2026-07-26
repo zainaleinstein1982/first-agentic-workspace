@@ -1,5 +1,3 @@
-// src/mockData.ts
-
 export interface SBLCBlockData {
   blockId: string;
   plannedProgress: number;
@@ -30,7 +28,7 @@ export const sblcDataDummy: SBLCBlockData[] = [
     costImpactUSD: 3000,
   },
   {
-    blockId: 'Blok 3B (Outfitting)',
+    blockId: 'Blok 3B (Painting)',
     plannedProgress: 90,
     actualProgress: 78,
     delayDays: 7,
