@@ -69,7 +69,7 @@ export default function App() {
     loadData();
   }, []);
 
-  // Fetch & Synchronize Messages per Channel
+  // Fetch & Synchronize Messages per Channel (Diperbaiki agar tidak terduplikasi)
   useEffect(() => {
     async function fetchMessages() {
       if (!activeChannel) return;
@@ -84,7 +84,7 @@ export default function App() {
           .order('created_at', { ascending: true });
 
         if (data && data.length > 0) {
-          setMessages([...initialMsgs, ...data]);
+          setMessages(data);
         } else {
           setMessages(initialMsgs);
         }
@@ -499,7 +499,24 @@ export default function App() {
               </button>
             </div>
 
-            {/* TABEL DATA SBLC */}
+            {/* CHANNEL CONTEXT BANNER (Memperjelas fungsi tiap Channel) */}
+            <div className="px-6 py-2 bg-[#101726] border-b border-slate-800/80 text-xs text-slate-400 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                <span>
+                  {activeChannel.name === 'engineering' && '🔧 Context: Shipbuilding Sequence (SBLC), Block Assembly & KRI Risk Escalate'}
+                  {activeChannel.name === 'data-insights' && '📊 Context: Real-time SQL Queries, Data Warehouse & Financial Dashboards'}
+                  {activeChannel.name === 'marketing' && '📢 Context: Marketing Campaigns, Content Strategies & Lead Generation'}
+                  {activeChannel.name === 'general' && '🌐 Context: General Team Coordination & Multi-Agent Workspace Discussions'}
+                  {!['engineering', 'data-insights', 'marketing', 'general'].includes(activeChannel.name) && `📌 Context Scope: #${activeChannel.name} Dedicated Channel Stream`}
+                </span>
+              </div>
+              <span className="text-[10px] bg-slate-800 px-2 py-0.5 rounded text-slate-300 font-mono">
+                Active Agents: Atlas, Iris, Raffasya
+              </span>
+            </div>
+
+            {/* TABEL DATA SBLC (Khusus Channel Engineering) */}
             {activeChannel.name === 'engineering' && (
               <div className="bg-[#0f1524] border-b border-slate-800/80 p-4 space-y-2">
                 <div className="flex items-center justify-between">
@@ -546,6 +563,11 @@ export default function App() {
                     <div className="space-y-1 flex-1">
                       <div className="flex items-center gap-2">
                         <span className="font-bold text-slate-200">{msg.sender_name}</span>
+                        {msg.sender_type === 'agent' && (
+                          <span className="text-[9px] bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 px-1.5 py-0.2 rounded font-mono">
+                            AI Agent
+                          </span>
+                        )}
                         <span className="text-[10px] text-slate-500">
                           {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
@@ -701,23 +723,16 @@ export default function App() {
                 </span>
               </div>
 
-              <button className="w-full border border-dashed border-slate-800 hover:border-slate-700 bg-[#101625] text-slate-300 rounded-lg py-2 px-3 text-xs font-medium flex items-center justify-center gap-2 transition-colors cursor-pointer">
-                <Plus size={14} className="text-slate-400" />
-                <span>Add Knowledge Base</span>
-              </button>
-
-              {brainKnowledgeList.map((item) => (
-                <div key={item.id} className="bg-[#101625] border border-slate-800/80 rounded-xl p-3 space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-bold text-white">{item.title}</span>
-                    <span className="text-[9px] text-slate-500">{item.updatedAt}</span>
+              {brainKnowledgeList.map((kb) => (
+                <div key={kb.id} className="bg-[#101625] border border-slate-800/80 rounded-xl p-3 space-y-2">
+                  <div className="flex items-start justify-between">
+                    <h4 className="text-xs font-bold text-slate-200">{kb.title}</h4>
                   </div>
-                  <span className="inline-block text-[9px] bg-blue-500/10 text-blue-400 border border-blue-500/20 px-1.5 py-0.5 rounded">
-                    {item.category}
-                  </span>
-                  <p className="text-[10px] text-slate-400 leading-relaxed pt-1">
-                    {item.snippet}
-                  </p>
+                  <p className="text-[10px] text-slate-400 leading-normal">{kb.snippet}</p>
+                  <div className="flex items-center justify-between text-[9px] text-slate-500 pt-1 border-t border-slate-800/40">
+                    <span className="bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">{kb.category}</span>
+                    <span>{kb.updatedAt}</span>
+                  </div>
                 </div>
               ))}
             </div>
