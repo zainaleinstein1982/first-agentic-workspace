@@ -132,7 +132,7 @@ export default function App() {
       return;
     }
 
-    // AKSI 2: Jika mengetik perintah Edit Data Blok
+    // AKSI 2: Jika mengetik perintah Edit Data Blok (Diperbarui ke Blok 3B Painting)
     if (
       activeChannel.name === 'engineering' && 
       (lowerText.includes('edit data') || lowerText.includes('edit blok') || lowerText.includes('- edit'))
@@ -144,13 +144,13 @@ export default function App() {
           sender_type: 'agent',
           sender_name: 'Raffasya (Process Agent)',
           content: `Silakan salin templat di bawah ini, sesuaikan nilainya, lalu kirimkan kembali ke chat:\n\n` +
-            `blockId: 'Blok 3B (Outfitting)',\n` +
-            `plannedProgress: 80,\n` +
-            `actualProgress: 73,\n` +
+            `blockId: 'Blok 3B (Painting)',\n` +
+            `plannedProgress: 90,\n` +
+            `actualProgress: 78,\n` +
             `delayDays: 7,\n` +
             `riskLevel: 'High',\n` +
-            `kriIndicator: 'Keterlambatan Supply Material Plate',\n` +
-            `costImpactUSD: 18000`,
+            `kriIndicator: 'Keterlambatan Pipa Main Engine',\n` +
+            `costImpactUSD: 22000`,
           created_at: new Date().toISOString()
         };
         setMessages((prev) => [...prev, editTemplate]);
