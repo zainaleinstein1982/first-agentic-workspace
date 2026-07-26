@@ -5,33 +5,19 @@ export type AgentResponseResult = {
   metadata?: Record<string, unknown>;
 };
 
-const QUERY_KEYWORDS = ['revenue', 'sales', 'metrics', 'data', 'show me', 'how many', 'analytics', 'numbers', 'report', 'stats', 'performance'];
-const SOP_KEYWORDS = ['sop', 'process', 'workflow', 'how to', 'steps', 'procedure', 'guide', 'onboard', 'setup'];
-const SEARCH_KEYWORDS = ['who', 'what is', 'when did', 'find', 'search', 'history', 'tell me', 'explain', 'summarize'];
-const TASK_KEYWORDS = ['create', 'build', 'make', 'generate', 'write', 'draft', 'schedule', 'set up', 'configure'];
+type AgentRef = { name: string; role: string | null };
+
+const QUERY_KEYWORDS = ['revenue', 'sales', 'metrics', 'data', 'show me', 'how many', 'analytics', 'numbers', 'report', 'stats', 'performance', 'cac', 'ltv'];
+const SOP_KEYWORDS = ['sop', 'process', 'workflow', 'how to', 'steps', 'procedure', 'guide', 'onboard', 'setup', 'checklist'];
+const COMMS_KEYWORDS = ['meeting', 'summary', 'draft', 'email', 'slack', 'q1', 'notes', 'summarize', 'action items'];
+const TASK_KEYWORDS = ['create', 'build', 'make', 'generate', 'write', 'schedule', 'set up', 'configure', 'task'];
 
 function matchKeywords(text: string, keywords: string[]) {
   const lower = text.toLowerCase();
   return keywords.some(kw => lower.includes(kw));
 }
 
-type AgentRef = { name: string; role: string | null };
-
-// Role names as seeded in the `agents` table schema. Matching by role (not by
-// a hardcoded display name like "Nexus" or "Raffasya") means routing keeps
-// working correctly even if an agent gets renamed in the database.
-const ROLE_DATA = 'Data Agent';
-const ROLE_PROCESS = 'Process Agent';
-const ROLE_COMMS = 'Comms Agent';
-const ROLE_KNOWLEDGE = 'Knowledge Agent';
-
-function findByRole(agents: AgentRef[], role: string): string | undefined {
-  return agents.find(a => a.role === role)?.name;
-}
-
-// Find an explicit "@AgentName" mention in the input. This takes priority over
-// keyword-based routing, so `@Atlas what's our revenue?` always goes to Atlas
-// instead of being hijacked by the "revenue" keyword.
+// Ekstraksi sebutan agen seperti "@Atlas", "@Echo", "@Raffasya"
 function extractMentionedAgent(input: string, agents: AgentRef[]): string | null {
   const mentionMatches = input.match(/@(\w+)/g);
   if (!mentionMatches) return null;
@@ -44,32 +30,49 @@ function extractMentionedAgent(input: string, agents: AgentRef[]): string | null
   return null;
 }
 
+function findByNameOrRole(agents: AgentRef[], nameQuery: string, roleQuery: string): string | undefined {
+  return agents.find(a => 
+    a.name.toLowerCase().includes(nameQuery.toLowerCase()) || 
+    (a.role && a.role.toLowerCase().includes(roleQuery.toLowerCase()))
+  )?.name;
+}
+
 export function pickAgent(input: string, agents: AgentRef[]): string {
+  // 1. Prioritas Utama: Mention langsung (@AgentName)
   const mentioned = extractMentionedAgent(input, agents);
   if (mentioned) return mentioned;
 
-  if (matchKeywords(input, QUERY_KEYWORDS)) return findByRole(agents, ROLE_DATA) ?? agents[0]?.name ?? 'Atlas';
-  if (matchKeywords(input, SOP_KEYWORDS)) return findByRole(agents, ROLE_PROCESS) ?? agents[0]?.name ?? 'Atlas';
-  if (matchKeywords(input, TASK_KEYWORDS)) return findByRole(agents, ROLE_COMMS) ?? agents[0]?.name ?? 'Atlas';
-  if (matchKeywords(input, SEARCH_KEYWORDS)) return findByRole(agents, ROLE_KNOWLEDGE) ?? agents[0]?.name ?? 'Atlas';
-  return findByRole(agents, ROLE_KNOWLEDGE) ?? agents[0]?.name ?? 'Atlas';
+  const lower = input.toLowerCase();
+
+  // 2. Pencocokan Berdasarkan Kata Kunci PromptQL
+  if (matchKeywords(lower, QUERY_KEYWORDS)) {
+    return findByNameOrRole(agents, 'iris', 'data') ?? 'Iris';
+  }
+  if (matchKeywords(lower, SOP_KEYWORDS)) {
+    return findByNameOrRole(agents, 'atlas', 'knowledge') ?? findByNameOrRole(agents, 'atlas', 'process') ?? 'Atlas';
+  }
+  if (matchKeywords(lower, COMMS_KEYWORDS)) {
+    return findByNameOrRole(agents, 'echo', 'comms') ?? 'Echo';
+  }
+  if (matchKeywords(lower, TASK_KEYWORDS)) {
+    return findByNameOrRole(agents, 'raffasya', 'orchestrator') ?? 'Raffasya';
+  }
+
+  // 3. Default ke Orchestrator/Knowledge Agent
+  return findByNameOrRole(agents, 'raffasya', 'orchestrator') ?? agents[0]?.name ?? 'Atlas';
 }
 
 export function generateAgentResponse(input: string, agentName: string, agents: AgentRef[]): AgentResponseResult {
   const lower = input.toLowerCase();
-  const role = agents.find(a => a.name === agentName)?.role ?? null;
+  const agentLower = agentName.toLowerCase();
 
-  // Each agent only ever produces the message type matching its role.
-  // Data Agent -> dashboard/query_result, Process Agent -> sop, Comms Agent -> task/text, Knowledge Agent -> text.
-  const isData = role === ROLE_DATA;
-  const isProcess = role === ROLE_PROCESS;
-  const isComms = role === ROLE_COMMS;
-  const isKnowledge = role === ROLE_KNOWLEDGE;
-
-  if (isData || (!isProcess && !isComms && !isKnowledge && matchKeywords(input, QUERY_KEYWORDS))) {
-    if (lower.includes('revenue') || lower.includes('sales')) {
+  // ----------------------------------------------------
+  // 1. IRIS (Data Agent) -> Dashboard & Analytics
+  // ----------------------------------------------------
+  if (agentLower.includes('iris') || matchKeywords(lower, QUERY_KEYWORDS)) {
+    if (lower.includes('revenue') || lower.includes('sales') || lower.includes('performance')) {
       return {
-        agentName,
+        agentName: 'Iris',
         content: 'Here\'s the revenue breakdown I pulled from your data warehouse:',
         messageType: 'dashboard',
         metadata: {
@@ -87,102 +90,79 @@ export function generateAgentResponse(input: string, agentName: string, agents: 
         }
       };
     }
-    if (lower.includes('cac') || lower.includes('customer') || lower.includes('acquisition')) {
-      return {
-        agentName,
-        content: 'Here\'s the customer acquisition analysis from CRM and marketing data:',
-        messageType: 'query_result',
-        metadata: {
-          type: 'table',
-          title: 'CAC & LTV by Segment',
-          columns: ['Segment', 'CAC', 'LTV', 'LTV:CAC', 'Trend'],
-          rows: [
-            ['SMB', '$4,200', '$15,960', '3.8x', '↑ +12%'],
-            ['Mid-Market', '$9,800', '$52,920', '5.4x', '↑ +8%'],
-            ['Enterprise', '$18,500', '$114,700', '6.2x', '↑ +22%'],
-          ],
-          summary: 'Enterprise LTV:CAC ratio improved 22% QoQ after new onboarding program launch.'
-        }
-      };
-    }
     return {
-      agentName,
-      content: 'I\'ve run the query against your connected data sources. Here\'s what I found:',
+      agentName: 'Iris',
+      content: 'Here\'s the customer acquisition & analytics report:',
       messageType: 'query_result',
       metadata: {
         type: 'table',
-        title: 'Data Query Results',
-        columns: ['Metric', 'This Month', 'Last Month', 'Change'],
+        title: 'CAC & LTV Analysis by Segment',
+        columns: ['Segment', 'CAC', 'LTV', 'LTV:CAC', 'Trend'],
         rows: [
-          ['Active Users', '14,230', '12,840', '↑ +10.8%'],
-          ['New Signups', '1,890', '1,420', '↑ +33.1%'],
-          ['Churn Rate', '2.1%', '2.6%', '↓ -0.5pp'],
-          ['NPS Score', '62', '58', '↑ +4pts'],
+          ['SMB', '$4,200', '$15,960', '3.8x', '↑ +12%'],
+          ['Mid-Market', '$9,800', '$52,920', '5.4x', '↑ +8%'],
+          ['Enterprise', '$18,500', '$114,700', '6.2x', '↑ +22%'],
         ],
-        summary: 'Overall health metrics are trending positively. User growth is accelerating.'
+        summary: 'Enterprise LTV:CAC ratio improved 22% QoQ after new onboarding program launch.'
       }
     };
   }
 
-  if (isProcess || (!isData && !isComms && !isKnowledge && matchKeywords(input, SOP_KEYWORDS))) {
+  // ----------------------------------------------------
+  // 2. ATLAS (Knowledge & Process Agent) -> SOP
+  // ----------------------------------------------------
+  if (agentLower.includes('atlas') || matchKeywords(lower, SOP_KEYWORDS)) {
     return {
-      agentName,
-      content: 'I\'ve generated a standard operating procedure based on your request:',
+      agentName: 'Atlas',
+      content: 'I\'ve generated an onboarding & engineering SOP from our Knowledge Brain:',
       messageType: 'sop',
       metadata: {
-        title: 'Standard Operating Procedure',
+        title: 'Engineering Onboarding SOP',
         steps: [
-          { step: 1, title: 'Initial Setup', description: 'Configure the workspace and invite team members via Settings → Members → Invite.' },
-          { step: 2, title: 'Define Roles & Permissions', description: 'Assign roles (Admin, Member, Viewer) based on team function. Admins can manage agents and channels.' },
-          { step: 3, title: 'Connect Data Sources', description: 'Integrate your tools under Settings → Integrations. Supported: Slack, Notion, GitHub, Google Workspace, Salesforce.' },
-          { step: 4, title: 'Configure AI Agents', description: 'Enable agents relevant to your workflow. Each agent can be assigned to specific channels for targeted assistance.' },
-          { step: 5, title: 'Train the Knowledge Brain', description: 'Upload documents, paste content, or sync from connected tools to build the shared company brain.' },
-          { step: 6, title: 'Launch & Monitor', description: 'Announce to the team. Track agent activity via the Analytics dashboard and refine agent prompts as needed.' },
+          { step: 1, title: 'Access & IAM Setup', description: 'Grant GitHub repository and Supabase dashboard access via Settings -> Team.' },
+          { step: 2, title: 'Local Environment', description: 'Clone first-agentic-workspace and configure .env.local parameters.' },
+          { step: 3, title: 'PromptQL Integration', description: 'Verify agent responses against local mock backend before pushing.' },
+          { step: 4, title: 'Deploy & Verify', description: 'Push to main branch and monitor deployment status in GitHub Actions.' },
         ]
       }
     };
   }
 
-  if ((isComms && matchKeywords(input, TASK_KEYWORDS)) || (!isData && !isProcess && !isKnowledge && matchKeywords(input, TASK_KEYWORDS))) {
+  // ----------------------------------------------------
+  // 3. ECHO (Comms Agent) -> Summary / Meeting Notes
+  // ----------------------------------------------------
+  if (agentLower.includes('echo') || matchKeywords(lower, COMMS_KEYWORDS)) {
     return {
-      agentName,
-      content: 'Task created and delegated to the relevant agents. Here\'s the breakdown:',
-      messageType: 'task',
-      metadata: {
-        title: 'Task Execution Plan',
-        tasks: [
-          { id: 1, task: 'Gather requirements from stakeholders', agent: findByRole(agents, ROLE_KNOWLEDGE) ?? 'Atlas', status: 'done', time: '2 min' },
-          { id: 2, task: 'Query relevant historical data', agent: findByRole(agents, ROLE_DATA) ?? 'Iris', status: 'done', time: '45s' },
-          { id: 3, task: 'Draft initial content structure', agent: findByRole(agents, ROLE_PROCESS) ?? 'Nexus', status: 'in_progress', time: '~3 min' },
-          { id: 4, task: 'Review and finalize output', agent: findByRole(agents, ROLE_COMMS) ?? 'Echo', status: 'pending', time: '~2 min' },
-        ]
-      }
+      agentName: 'Echo',
+      content: `[PromptQL Comms Summary]
+Here is the Q1 Planning Meeting summary extracted from your team channel:
+
+📌 **Key Highlights:**
+- **Product:** AI Agentic Workspace with multi-agent coordination.
+- **Goal:** Increase user retention by 25% using instant PromptQL responses.
+
+📋 **Action Items:**
+- **@Engineering:** Connect Supabase Realtime for instant chat streaming.
+- **@Data Team:** Finalize SQL views for Iris Data Agent charts.`,
+      messageType: 'text'
     };
   }
 
-  // Default knowledge search response
-  const knowledgeResponses = [
-    {
-      keywords: ['revenue', 'target', 'arr', 'hiring', 'headcount', 'engineer'],
-      content: 'Based on our shared company brain, here\'s what I found about your query. The Q4 2024 revenue target was set at **$12.5M ARR**, with focus on enterprise deals. Current pipeline confidence is at 78%. The engineering team is planned to grow from 24 to 40 engineers by end of 2025.',
-      messageType: 'text' as const,
-    },
-    {
-      keywords: ['roadmap', 'product', 'feature', 'plan', 'vision'],
-      content: 'I\'ve searched across all connected tools — Slack, Notion, meeting transcripts, and documents. The most relevant context is: the product roadmap for H1 2025 prioritizes the AI memory layer and multiplayer workspaces in Q1, followed by SOC2 compliance in Q2. No need to ping anyone — I have the full history.',
-      messageType: 'text' as const,
-    },
-    {
-      keywords: ['incident', 'p0', 'p1', 'outage', 'escalat', 'on-call', 'oncall'],
-      content: 'Great question. From the engineering handbook: P0 incidents require on-call response within **15 minutes**, escalation goes On-call → Tech Lead → CTO, and post-mortems are mandatory within 48 hours for all P0/P1 incidents. Want me to generate a full incident response SOP?',
-      messageType: 'text' as const,
-    },
-  ];
-
-  // Prefer a response whose keywords actually appear in the user's message
-  // (this is what makes @Atlas / @Echo "search" and "summarize" mentions from
-  // SEARCH_KEYWORDS feel like they're answering the actual question asked).
-  const contextual = knowledgeResponses.find(r => matchKeywords(input, r.keywords));
-  const picked = contextual ?? knowledgeResponses[Math.floor(Math.random() * knowledgeResponses.length)];
-  return { agentName, content: picked.content, messageType: picked.messageType };
+  // ----------------------------------------------------
+  // 4. RAFFASYA (Workspace Orchestrator) -> Task Execution
+  // ----------------------------------------------------
+  return {
+    agentName: 'Raffasya',
+    content: 'Task plan generated and assigned across workspace agents:',
+    messageType: 'task',
+    metadata: {
+      title: 'Workspace Execution Plan',
+      tasks: [
+        { id: 1, task: 'Extract knowledge context from docs', agent: 'Atlas', status: 'done', time: '1s' },
+        { id: 2, task: 'Fetch live metrics from warehouse', agent: 'Iris', status: 'done', time: '2s' },
+        { id: 3, task: 'Format team communication summary', agent: 'Echo', status: 'in_progress', time: '~1 min' },
+        { id: 4, task: 'Finalize agent pipeline response', agent: 'Raffasya', status: 'pending', time: '~1 min' },
+      ]
+    }
+  };
 }
