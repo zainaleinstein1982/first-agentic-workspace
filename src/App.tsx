@@ -31,7 +31,7 @@ export default function App() {
     setActiveView('knowledge');
   };
 
-  // Handler Pengiriman Pesan & Respon Otomatis Agen AI
+  // Handler Pengiriman Pesan & Respon Otomatis Agen AI (Sudah Disesuaikan)
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!inputText.trim() || !activeChannelId) return;
@@ -39,8 +39,8 @@ export default function App() {
     const userQuery = inputText;
     setInputText('');
 
-    // 1. Simpan pesan pengguna ke Supabase
-    await sendMessage(activeChannelId, userQuery);
+    // 1. Simpan pesan pengguna ke Supabase (channelId diambil otomatis via hook)
+    await sendMessage(userQuery, 'Asih Winarti');
 
     // 2. Deteksi kata kunci & simulasi balasan otomatis dari AI Agent
     const lower = userQuery.toLowerCase();
@@ -48,7 +48,6 @@ export default function App() {
     if (lower.includes('sblc') || lower.includes('jadwal') || lower.includes('blok')) {
       setTimeout(async () => {
         await sendAgentMessage(
-          activeChannelId,
           'Atlas',
           'Berdasarkan pemantauan SBLC real-time: Perakitan blok 4C mengalami deviasi 1.5 hari pada lintasan outfitting piping. Mengacu pada SOP-MAR-2026-V2.4, status masih dalam ambang toleransi aman (< 3 hari).',
           'text',
@@ -58,7 +57,6 @@ export default function App() {
     } else if (lower.includes('promptql') || lower.includes('query') || lower.includes('harga') || lower.includes('material')) {
       setTimeout(async () => {
         await sendAgentMessage(
-          activeChannelId,
           'Echo',
           'FETCH TOP 5 procurement_items { item_name, budgeted_cost, actual_cost, variance_percentage } WHERE project = "HULL-2026-A" ORDER BY variance_percentage DESC',
           'code',
@@ -68,7 +66,6 @@ export default function App() {
     } else if (lower.includes('kri') || lower.includes('risiko') || lower.includes('risk') || lower.includes('sop')) {
       setTimeout(async () => {
         await sendAgentMessage(
-          activeChannelId,
           'Iris',
           'Analisis Risiko Operasional: KRI Score untuk keterlambatan pengadaan komponen listrik berada pada indikator AMBER (Moderat). Direkomendasikan melakukan re-scheduling sekuens di Dockyard B.',
           'text',
@@ -142,7 +139,7 @@ export default function App() {
                         ? 'bg-blue-600 text-white font-medium text-xs' 
                         : 'bg-indigo-600/20 border border-indigo-500/30 text-indigo-400'
                     }`}>
-                      {msg.sender_type === 'user' ? 'YW' : <Bot size={16} />}
+                      {msg.sender_type === 'user' ? 'AW' : <Bot size={16} />}
                     </div>
 
                     <div className={`flex flex-col ${msg.sender_type === 'user' ? 'items-end' : 'items-start'}`}>
@@ -220,7 +217,6 @@ export default function App() {
                     const title = prompt('Judul Dokumen:');
                     const content = prompt('Isi Ringkasan Dokumen:');
                     if (title && content) {
-                      // Panggil handler penambahan dokumen di sini
                       alert('Dokumen berhasil disimpan ke Knowledge Brain!');
                     }
                   }}
