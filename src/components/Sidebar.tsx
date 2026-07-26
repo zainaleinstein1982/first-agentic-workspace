@@ -18,11 +18,22 @@ type Props = {
   onOpenAgents: () => void;
   onOpenKnowledge: () => void;
   onNewChannel: () => void;
+  onQuickAction?: (promptText: string) => void;
   collapsed: boolean;
 };
 
-export function Sidebar({ channels, agents, activeChannelId, onSelectChannel, onOpenAgents, onOpenKnowledge, onNewChannel, collapsed }: Props) {
-  const [openSections, setOpenSections] = useState({ channels: true, agents: true, brain: true });
+export function Sidebar({ 
+  channels, 
+  agents, 
+  activeChannelId, 
+  onSelectChannel, 
+  onOpenAgents, 
+  onOpenKnowledge, 
+  onNewChannel, 
+  onQuickAction,
+  collapsed 
+}: Props) {
+  const [openSections, setOpenSections] = useState({ channels: true, agents: true, brain: true, quickActions: false });
 
   const toggle = (key: keyof typeof openSections) => setOpenSections(s => ({ ...s, [key]: !s[key] }));
 
@@ -35,7 +46,7 @@ export function Sidebar({ channels, agents, activeChannelId, onSelectChannel, on
         <button onClick={onOpenAgents} className="text-slate-400 hover:text-white transition-colors" title="Agents">
           <Bot size={20} />
         </button>
-        <button onClick={onOpenKnowledge} className="text-slate-400 hover:text-white transition-colors" title="Knowledge">
+        <button onClick={onOpenKnowledge} className="text-slate-400 hover:text-white transition-colors" title="Knowledge Brain">
           <Brain size={20} />
         </button>
         <button onClick={onNewChannel} className="text-slate-400 hover:text-white transition-colors" title="New channel">
@@ -76,17 +87,53 @@ export function Sidebar({ channels, agents, activeChannelId, onSelectChannel, on
       </div>
 
       <div className="flex-1 overflow-y-auto px-2 pb-4 space-y-1">
-        {/* Quick actions */}
-        <div className="px-2 py-1.5 flex items-center gap-2 text-slate-300 hover:bg-slate-900 rounded-md cursor-pointer transition-colors">
-          <Zap size={16} className="text-amber-400" />
-          <span className="text-sm font-medium">Quick Actions</span>
-        </div>
-        <div className="px-2 py-1.5 flex items-center gap-2 text-slate-300 hover:bg-slate-900 rounded-md cursor-pointer transition-colors" onClick={onOpenAgents}>
-          <Users size={16} className="text-blue-400" />
-          <span className="text-sm font-medium">Team Chat</span>
+        {/* Quick actions Section */}
+        <div>
+          <button 
+            onClick={() => toggle('quickActions')} 
+            className="w-full px-2 py-1.5 flex items-center justify-between text-slate-300 hover:bg-slate-900 rounded-md transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Zap size={16} className="text-amber-400" />
+              <span className="text-sm font-medium">Quick Actions</span>
+            </div>
+            <ChevronDown size={14} className={`transition-transform text-slate-500 ${openSections.quickActions ? '' : '-rotate-90'}`} />
+          </button>
+          
+          {openSections.quickActions && (
+            <div className="mt-1 pl-6 space-y-1">
+              <button 
+                onClick={() => onQuickAction?.("Build a setup task for the team")}
+                className="w-full text-left py-1 px-2 text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-900 rounded transition-colors"
+              >
+                ⚡ Create Team Task Plan
+              </button>
+              <button 
+                onClick={() => onQuickAction?.("Show me revenue performance for the last 6 months")}
+                className="w-full text-left py-1 px-2 text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-900 rounded transition-colors"
+              >
+                📊 Query Revenue Data
+              </button>
+              <button 
+                onClick={() => onQuickAction?.("Create an onboarding SOP for new engineers")}
+                className="w-full text-left py-1 px-2 text-xs text-slate-400 hover:text-slate-200 hover:bg-slate-900 rounded transition-colors"
+              >
+                📋 Generate Onboarding SOP
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Channels */}
+        {/* Team Chat Menu */}
+        <div 
+          className="px-2 py-1.5 flex items-center gap-2 text-slate-300 hover:bg-slate-900 rounded-md cursor-pointer transition-colors" 
+          onClick={onOpenAgents}
+        >
+          <Users size={16} className="text-blue-400" />
+          <span className="text-sm font-medium">Team Chat / Agents</span>
+        </div>
+
+        {/* Channels Section */}
         <div className="pt-3">
           <button onClick={() => toggle('channels')} className="w-full px-2 py-1 flex items-center justify-between text-slate-500 hover:text-slate-300 transition-colors">
             <span className="text-[11px] font-semibold uppercase tracking-wider">Channels</span>
@@ -118,7 +165,7 @@ export function Sidebar({ channels, agents, activeChannelId, onSelectChannel, on
           )}
         </div>
 
-        {/* Agents */}
+        {/* AI Agents Section */}
         <div className="pt-3">
           <button onClick={() => toggle('agents')} className="w-full px-2 py-1 flex items-center justify-between text-slate-500 hover:text-slate-300 transition-colors">
             <span className="text-[11px] font-semibold uppercase tracking-wider">AI Agents</span>
@@ -139,7 +186,7 @@ export function Sidebar({ channels, agents, activeChannelId, onSelectChannel, on
           )}
         </div>
 
-        {/* Knowledge Brain */}
+        {/* Knowledge Brain Section */}
         <div className="pt-3">
           <button onClick={() => toggle('brain')} className="w-full px-2 py-1 flex items-center justify-between text-slate-500 hover:text-slate-300 transition-colors">
             <span className="text-[11px] font-semibold uppercase tracking-wider">Knowledge Brain</span>
