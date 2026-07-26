@@ -14,9 +14,10 @@ type Props = {
   channels: Channel[];
   agents: Agent[];
   activeChannelId: string | null;
+  selectedKnowledgeCategory?: string | null; // Props opsional untuk menandai kategori yang sedang aktif
   onSelectChannel: (id: string) => void;
   onOpenAgents: () => void;
-  onOpenKnowledge: () => void;
+  onOpenKnowledge: (categoryName?: string) => void; // Perbaikan: menerima nama kategori
   onNewChannel: () => void;
   onQuickAction?: (promptText: string) => void;
   collapsed: boolean;
@@ -26,6 +27,7 @@ export function Sidebar({
   channels, 
   agents, 
   activeChannelId, 
+  selectedKnowledgeCategory,
   onSelectChannel, 
   onOpenAgents, 
   onOpenKnowledge, 
@@ -46,7 +48,7 @@ export function Sidebar({
         <button onClick={onOpenAgents} className="text-slate-400 hover:text-white transition-colors" title="Agents">
           <Bot size={20} />
         </button>
-        <button onClick={onOpenKnowledge} className="text-slate-400 hover:text-white transition-colors" title="Knowledge Brain">
+        <button onClick={() => onOpenKnowledge('Company Brain')} className="text-slate-400 hover:text-white transition-colors" title="Knowledge Brain">
           <Brain size={20} />
         </button>
         <button onClick={onNewChannel} className="text-slate-400 hover:text-white transition-colors" title="New channel">
@@ -149,7 +151,7 @@ export function Sidebar({
                     key={ch.id}
                     onClick={() => onSelectChannel(ch.id)}
                     className={`w-full px-2 py-1.5 flex items-center gap-2 rounded-md text-sm transition-colors ${
-                      active ? 'bg-blue-500/10 text-blue-300' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                      active ? 'bg-blue-500/10 text-blue-300 font-medium' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
                     }`}
                   >
                     <Icon size={15} className={active ? 'text-blue-400' : 'text-slate-500'} />
@@ -186,7 +188,7 @@ export function Sidebar({
           )}
         </div>
 
-        {/* Knowledge Brain Section */}
+        {/* Knowledge Brain Section (PERBAIKAN UTAMA DI SINI) */}
         <div className="pt-3">
           <button onClick={() => toggle('brain')} className="w-full px-2 py-1 flex items-center justify-between text-slate-500 hover:text-slate-300 transition-colors">
             <span className="text-[11px] font-semibold uppercase tracking-wider">Knowledge Brain</span>
@@ -194,16 +196,33 @@ export function Sidebar({
           </button>
           {openSections.brain && (
             <div className="mt-1 space-y-0.5">
-              <button onClick={onOpenKnowledge} className="w-full px-2 py-1.5 flex items-center gap-2 rounded-md text-sm text-slate-400 hover:text-slate-200 hover:bg-slate-900 transition-colors">
-                <Brain size={15} className="text-emerald-400" />
+              <button 
+                onClick={() => onOpenKnowledge('Company Brain')} 
+                className={`w-full px-2 py-1.5 flex items-center gap-2 rounded-md text-sm transition-colors ${
+                  selectedKnowledgeCategory === 'Company Brain' ? 'bg-blue-500/10 text-blue-300 font-medium' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                }`}
+              >
+                <Brain size={15} className={selectedKnowledgeCategory === 'Company Brain' ? 'text-blue-400' : 'text-emerald-400'} />
                 <span>Company Brain</span>
               </button>
-              <button onClick={onOpenKnowledge} className="w-full px-2 py-1.5 flex items-center gap-2 rounded-md text-sm text-slate-400 hover:text-slate-200 hover:bg-slate-900 transition-colors">
-                <BookOpen size={15} className="text-slate-500" />
+
+              <button 
+                onClick={() => onOpenKnowledge('Documents')} 
+                className={`w-full px-2 py-1.5 flex items-center gap-2 rounded-md text-sm transition-colors ${
+                  selectedKnowledgeCategory === 'Documents' ? 'bg-blue-500/10 text-blue-300 font-medium' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                }`}
+              >
+                <BookOpen size={15} className={selectedKnowledgeCategory === 'Documents' ? 'text-blue-400' : 'text-slate-500'} />
                 <span>Documents</span>
               </button>
-              <button onClick={onOpenKnowledge} className="w-full px-2 py-1.5 flex items-center gap-2 rounded-md text-sm text-slate-400 hover:text-slate-200 hover:bg-slate-900 transition-colors">
-                <MessageSquare size={15} className="text-slate-500" />
+
+              <button 
+                onClick={() => onOpenKnowledge('Meeting Notes')} 
+                className={`w-full px-2 py-1.5 flex items-center gap-2 rounded-md text-sm transition-colors ${
+                  selectedKnowledgeCategory === 'Meeting Notes' ? 'bg-blue-500/10 text-blue-300 font-medium' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+                }`}
+              >
+                <MessageSquare size={15} className={selectedKnowledgeCategory === 'Meeting Notes' ? 'text-blue-400' : 'text-slate-500'} />
                 <span>Meeting Notes</span>
               </button>
             </div>
