@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PanelRightClose, PanelRightOpen, Bot, Brain } from 'lucide-react';
 import { Sidebar } from '@/components/Sidebar';
 import { ChatPanel } from '@/components/ChatPanel';
@@ -14,12 +14,33 @@ function App() {
   const [activeChannelId, setActiveChannelId] = useState<string | null>(null);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [rightPanelOpen, setRightPanelOpen] = useState(true);
+  
+  // State baru untuk mengontrol tab aktif pada RightPanel ('agents' atau 'brain')
+  const [activeRightTab, setActiveRightTab] = useState<'agents' | 'brain'>('agents');
+
+  // Atur default activeChannelId ke channel pertama jika tersedia
+  useEffect(() => {
+    if (channels.length > 0 && !activeChannelId) {
+      setActiveChannelId(channels[0].id);
+    }
+  }, [channels, activeChannelId]);
 
   const activeChannel = channels.find(c => c.id === activeChannelId) ?? null;
   const { messages, loading: messagesLoading, sendMessage, sendAgentMessage } = useMessages(activeChannelId);
 
   const handleSelectChannel = (id: string) => {
     setActiveChannelId(id);
+  };
+
+  // Handler untuk membuka tab Agents pada RightPanel
+  const handleOpenAgents = () => {
+    setActiveRightTab('agents');
+    setRightPanelOpen(true);
+  };
+
+  // Handler untuk membuka tab Knowledge Brain pada RightPanel
+  const handleOpenKnowledge = () => {
+    setActiveRightTab('brain');
     setRightPanelOpen(true);
   };
 
@@ -28,9 +49,20 @@ function App() {
     return sendMessage(activeChannelId, content);
   };
 
-  const handleSendAgentMessage = async (agentName: string, content: string, messageType: Message['message_type'], metadata?: Record<string, unknown>) => {
+  const handleSendAgentMessage = async (
+    agentName: string, 
+    content: string, 
+    messageType: Message['message_type'], 
+    metadata?: Record<string, unknown>
+  ) => {
     if (!activeChannelId) return null;
     return sendAgentMessage(activeChannelId, agentName, content, messageType, metadata);
+  };
+
+  // Handler untuk mengeksekusi pesan dari menu Quick Action
+  const handleQuickAction = async (promptText: string) => {
+    if (!activeChannelId) return;
+    await handleSendUserMessage(promptText);
   };
 
   const handleNewChannel = () => {
@@ -58,8 +90,9 @@ function App() {
         agents={agents}
         activeChannelId={activeChannelId}
         onSelectChannel={handleSelectChannel}
-        onOpenAgents={() => setRightPanelOpen(true)}
-        onOpenKnowledge={() => { setRightPanelOpen(true); }}
+        onOpenAgents={handleOpenAgents}
+        onOpenKnowledge={handleOpenKnowledge}
+        onQuickAction={handleQuickAction}
         onNewChannel={handleNewChannel}
         collapsed={sidebarCollapsed}
       />
@@ -80,11 +113,15 @@ function App() {
           className="w-10 border-l border-slate-800 bg-slate-950 flex flex-col items-center justify-start pt-4 gap-4 shrink-0 hover:bg-slate-900 transition-colors group"
           title={rightPanelOpen ? 'Hide panel' : 'Show panel'}
         >
-          {rightPanelOpen ? <PanelRightClose size={18} className="text-slate-500 group-hover:text-slate-300" /> : <PanelRightOpen size={18} className="text-slate-500 group-hover:text-slate-300" />}
+          {rightPanelOpen ? (
+            <PanelRightClose size={18} className="text-slate-500 group-hover:text-slate-300" />
+          ) : (
+            <PanelRightOpen size={18} className="text-slate-500 group-hover:text-slate-300" />
+          )}
           {!rightPanelOpen && (
             <>
-              <Bot size={18} className="text-slate-500 group-hover:text-slate-300 mt-2" />
-              <Brain size={18} className="text-slate-500 group-hover:text-slate-300" />
+              <Bot size={18} className="text-slate-500 group-hover:text-slate-300 mt-2" onClick={handleOpenAgents} />
+              <Brain size={18} className="text-slate-500 group-hover:text-slate-300" onClick={handleOpenKnowledge} />
             </>
           )}
         </button>
@@ -95,6 +132,8 @@ function App() {
         onClose={() => setRightPanelOpen(false)}
         agents={agents}
         knowledgeItems={knowledgeItems}
+        activeTab={activeRightTab}
+        onTabChange={setActiveRightTab}
       />
     </div>
   );
