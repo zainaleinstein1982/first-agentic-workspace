@@ -85,16 +85,43 @@ export function useAgents() {
   return { agents, loading };
 }
 
-export function useKnowledge() {
+// PERBAIKAN PADA USEKNOWLEDGE
+export function useKnowledge(categoryFilter?: string | null) {
   const [items, setItems] = useState<KnowledgeItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    supabase.from('knowledge_items').select('*').order('updated_at', { ascending: false }).then(({ data }) => {
-      if (data) setItems(data as KnowledgeItem[]);
-      setLoading(false);
-    });
-  }, []);
+  const fetchKnowledge = useCallback(async () => {
+    setLoading(true);
+    let query = supabase.from('knowledge_items').select('*').order('updated_at', { ascending: false });
 
-  return { items, loading };
+    // Jika ada filter kategori (Documents / Meeting Notes), saring datanya
+    if (categoryFilter && categoryFilter !== 'Company Brain') {
+      query = query.ilike('category', `%${categoryFilter}%`);
+    }
+
+    const { data } = await query;
+    if (data) setItems(data as KnowledgeItem[]);
+    setLoading(false);
+  }, [categoryFilter]);
+
+  useEffect(() => {
+    fetchKnowledge();
+  }, [fetchKnowledge]);
+
+  // Fungsi tambahan untuk menambahkan dokumen baru ke Knowledge Brain
+  const addKnowledgeItem = async (title: string, category: string, content: string) => {
+    const { data } = await supabase.from('knowledge_items').insert({
+      title,
+      category,
+      content,
+      updated_at: new Date().toISOString()
+    }).select().maybeSingle();
+
+    if (data) {
+      setItems((prev) => [data as KnowledgeItem, ...prev]);
+    }
+    return data as KnowledgeItem | null;
+  };
+
+  return { items, loading, refetch: fetchKnowledge, addKnowledgeItem };
 }
