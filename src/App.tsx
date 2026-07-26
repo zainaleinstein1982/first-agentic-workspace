@@ -8,7 +8,9 @@ import { useChannels, useAgents, useKnowledge, useMessages } from './hooks/useWo
 
 export default function App() {
   const [activeView, setActiveView] = useState<'chat' | 'knowledge' | 'agents'>('chat');
-  const [activeChannelId, setActiveChannelId] = useState<string | null>('10000000-0000-0000-0000-000000000001');
+  
+  // 1. Inisialisasi activeChannelId sebagai null terlebih dahulu
+  const [activeChannelId, setActiveChannelId] = useState<string | null>(null);
   const [selectedKnowledgeCategory, setSelectedKnowledgeCategory] = useState<string | null>('Company Brain');
   const [inputText, setInputText] = useState('');
   const [collapsed, setCollapsed] = useState(false);
@@ -21,6 +23,13 @@ export default function App() {
 
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  // 2. PERBAIKAN UTAMA: Auto-select channel pertama yang ada di database Supabase
+  useEffect(() => {
+    if (channels.length > 0 && !activeChannelId) {
+      setActiveChannelId(channels[0].id);
+    }
+  }, [channels, activeChannelId]);
+
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
@@ -31,7 +40,7 @@ export default function App() {
     setActiveView('knowledge');
   };
 
-  // Handler Pengiriman Pesan & Respon Otomatis Agen AI (Sudah Disesuaikan)
+  // Handler Pengiriman Pesan & Respon Otomatis AI Agent
   const handleSendMessage = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     if (!inputText.trim() || !activeChannelId) return;
@@ -39,10 +48,10 @@ export default function App() {
     const userQuery = inputText;
     setInputText('');
 
-    // 1. Simpan pesan pengguna ke Supabase (channelId diambil otomatis via hook)
+    // Simpan pesan pengguna ke Supabase via hook terbaru
     await sendMessage(userQuery, 'Asih Winarti');
 
-    // 2. Deteksi kata kunci & simulasi balasan otomatis dari AI Agent
+    // Deteksi kata kunci & balasan AI Agent
     const lower = userQuery.toLowerCase();
 
     if (lower.includes('sblc') || lower.includes('jadwal') || lower.includes('blok')) {
@@ -112,7 +121,7 @@ export default function App() {
             <div className="px-6 py-4 border-b border-slate-800 bg-slate-950/50 flex items-center justify-between shrink-0">
               <div>
                 <h2 className="text-base font-semibold text-white flex items-center gap-2">
-                  <span className="text-slate-500">#</span> {activeChannel?.name || 'sblc-shipbuilding-planning'}
+                  <span className="text-slate-500">#</span> {activeChannel?.name || 'pilih-channel'}
                 </h2>
                 <p className="text-xs text-slate-400 mt-0.5">{activeChannel?.description || 'Diskusi proyek & monitoring SBLC'}</p>
               </div>
@@ -127,7 +136,9 @@ export default function App() {
               {messagesLoading ? (
                 <div className="text-center text-slate-500 text-sm py-10">Memuat riwayat percakapan...</div>
               ) : messages.length === 0 ? (
-                <div className="text-center text-slate-500 text-sm py-10">Belum ada pesan di channel ini. Mulai diskusi!</div>
+                <div className="text-center text-slate-500 text-sm py-10">
+                  Belum ada pesan di channel <strong className="text-slate-300">#{activeChannel?.name}</strong>. Ketik pesan di bawah untuk memulai!
+                </div>
               ) : (
                 messages.map((msg) => (
                   <div 
@@ -266,7 +277,7 @@ export default function App() {
           </div>
         )}
 
-        {/* VIEW 3: AI AGENTS DIRECTORY & RESPONSIBILITIES */}
+        {/* VIEW 3: AI AGENTS DIRECTORY */}
         {activeView === 'agents' && (
           <div className="flex-1 overflow-y-auto p-8">
             <div className="max-w-5xl w-full mx-auto space-y-6">
