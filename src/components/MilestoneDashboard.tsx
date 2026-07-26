@@ -4,12 +4,7 @@ import {
   ChevronLeft, 
   Circle, 
   Triangle, 
-  Square, 
-  Calendar,
-  CheckCircle2,
-  Clock,
-  AlertTriangle,
-  ListTodo
+  Square 
 } from 'lucide-react';
 
 // Data milestone galangan kapal sesuai diagram
@@ -81,7 +76,7 @@ export const MilestoneDashboard: React.FC = () => {
   return (
     <div className="w-full max-w-6xl mx-auto space-y-5 p-2 font-sans text-slate-100">
       
-      {/* 1. KARTU UTAMA: DIAGRAM MILESTONE SBLC */}
+      {/* KARTU UTAMA: DIAGRAM MILESTONE SBLC */}
       <div className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-6 shadow-xl backdrop-blur-md">
         
         {/* Header Diagram */}
@@ -109,8 +104,9 @@ export const MilestoneDashboard: React.FC = () => {
             SBLC 2026
           </div>
 
-          {/* Garis Dasar Timeline (Dotted Line) */}
-          <div className="ml-28 relative h-10 flex items-center">
+          {/* Garis Dasar Timeline (Dotted Line) & Marker Icons */}
+          <div className="ml-28 relative h-12 flex items-center">
+            {/* Garis Horizontal Utama */}
             <div className="w-full border-b-2 border-dotted border-slate-600/60" />
 
             {/* Garis Pembatas Tahun (Vertical Separator) */}
@@ -122,16 +118,16 @@ export const MilestoneDashboard: React.FC = () => {
               return (
                 <div
                   key={item.id}
-                  className="absolute flex flex-col items-center -translate-x-1/2 group cursor-pointer"
+                  className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 flex items-center justify-center group cursor-pointer"
                   style={{ left: item.position }}
                 >
-                  {/* Label Teks di Atas Pin */}
-                  <span className="text-[11px] font-mono text-slate-300 mb-2 whitespace-nowrap opacity-90 group-hover:opacity-100 transition-opacity">
+                  {/* Label Teks di Atas Garis */}
+                  <span className="absolute -top-7 text-[11px] font-mono text-slate-300 whitespace-nowrap opacity-90 group-hover:opacity-100 transition-opacity pointer-events-none">
                     {item.label}
                   </span>
 
-                  {/* Icon Node Visual */}
-                  <div className="bg-slate-950 p-1 rounded-full z-10 transition-transform group-hover:scale-125">
+                  {/* Icon Node Visual - Tepat Berada di Tengah Garis */}
+                  <div className="bg-slate-950 p-1 rounded-full z-10 transition-transform group-hover:scale-125 flex items-center justify-center">
                     <IconComponent 
                       size={14} 
                       className={`${item.color} fill-current ${item.rotateIcon || ''}`} 
@@ -157,51 +153,6 @@ export const MilestoneDashboard: React.FC = () => {
               </div>
             );
           })}
-        </div>
-
-      </div>
-
-      {/* 2. GRID KARTU STATISTIK TUGAS (4 COLUMN METRICS) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        
-        {/* Completed Tasks */}
-        <div className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-5 shadow-lg flex flex-col justify-between hover:border-slate-700 transition-colors">
-          <div className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
-            Completed Tasks
-          </div>
-          <div className="text-3xl font-extrabold text-white mt-3">
-            3
-          </div>
-        </div>
-
-        {/* Incomplete Tasks */}
-        <div className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-5 shadow-lg flex flex-col justify-between hover:border-slate-700 transition-colors">
-          <div className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
-            Incomplete Tasks
-          </div>
-          <div className="text-3xl font-extrabold text-white mt-3">
-            3
-          </div>
-        </div>
-
-        {/* Overdue Tasks */}
-        <div className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-5 shadow-lg flex flex-col justify-between hover:border-slate-700 transition-colors">
-          <div className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
-            Overdue Tasks
-          </div>
-          <div className="text-3xl font-extrabold text-white mt-3">
-            0
-          </div>
-        </div>
-
-        {/* Total Tasks */}
-        <div className="bg-slate-950/80 border border-slate-800/80 rounded-xl p-5 shadow-lg flex flex-col justify-between hover:border-slate-700 transition-colors">
-          <div className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">
-            Total Tasks
-          </div>
-          <div className="text-3xl font-extrabold text-white mt-3">
-            6
-          </div>
         </div>
 
       </div>
