@@ -4,6 +4,7 @@ import { fileURLToPath, URL } from 'node:url';
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  base: '/first-agentic-workspace/', // <-- Added this so Vite loads assets from GitHub Pages path
   plugins: [react()],
   resolve: {
     alias: {
