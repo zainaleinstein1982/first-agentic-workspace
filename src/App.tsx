@@ -21,9 +21,12 @@ import {
   Users,
   Settings,
   X,
-  PlusCircle
+  PlusCircle,
+  Play,
+  AlertTriangle
 } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
+import { sblcDataDummy, promptQLSimulations } from './mockData';
 
 // Setup Supabase Client
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
@@ -37,24 +40,25 @@ const iconMap: Record<string, React.ElementType> = {
 export default function App() {
   const [channels, setChannels] = useState<any[]>([]);
   const [agents, setAgents] = useState<any[]>([]);
-  const [activeChannel, setActiveChannel] = useState<any>(null); // Default null untuk menampilkan Welcome State
+  const [activeChannel, setActiveChannel] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [rightTab, setRightTab] = useState<'agents' | 'brain'>('agents');
+  const [isExecutingPromptQL, setIsExecutingPromptQL] = useState(false);
 
-  // Load Data dari Supabase
+  // Load Initial Channels & Agents
   useEffect(() => {
     async function loadData() {
       const { data: channelsData } = await supabase.from('channels').select('*').order('created_at', { ascending: true });
-      if (channelsData) setChannels(channelsData);
+      if (channelsData && channelsData.length > 0) setChannels(channelsData);
 
       const { data: agentsData } = await supabase.from('agents').select('*');
-      if (agentsData) setAgents(agentsData);
+      if (agentsData && agentsData.length > 0) setAgents(agentsData);
     }
     loadData();
   }, []);
 
-  // Fetch Messages saat activeChannel dipilih
+  // Fetch Messages saat activeChannel berubah
   useEffect(() => {
     async function fetchMessages() {
       if (!activeChannel) return;
@@ -68,12 +72,43 @@ export default function App() {
     fetchMessages();
   }, [activeChannel]);
 
-  // Handle Send Message
+  // Eksekusi Simulasi PromptQL Strategis
+  const handleRunPromptQL = () => {
+    if (!activeChannel) return;
+    setIsExecutingPromptQL(true);
+
+    setTimeout(() => {
+      const userMsg = {
+        id: Date.now().toString(),
+        channel_id: activeChannel.id,
+        sender_type: 'user',
+        sender_name: 'Jane Doe',
+        content: `RUN PROMPTQL: Jalankan analisis risiko SBLC & strategi mitigasi keterlambatan sekuens blok.`,
+        created_at: new Date().toISOString()
+      };
+
+      const agentResponseText = promptQLSimulations[activeChannel.name] || promptQLSimulations.general;
+
+      const agentMsg = {
+        id: (Date.now() + 1).toString(),
+        channel_id: activeChannel.id,
+        sender_type: 'agent',
+        sender_name: 'PromptQL Orchestrator (Iris & Raffasya)',
+        content: agentResponseText,
+        created_at: new Date().toISOString()
+      };
+
+      setMessages((prev) => [...prev, userMsg, agentMsg]);
+      setIsExecutingPromptQL(false);
+    }, 1200);
+  };
+
+  // Kirim Pesan Biasa
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !activeChannel) return;
 
-    const msgObj = {
+    const userObj = {
       channel_id: activeChannel.id,
       sender_type: 'user',
       sender_name: 'Jane Doe',
@@ -81,11 +116,21 @@ export default function App() {
       message_type: 'text'
     };
 
-    const { data } = await supabase.from('messages').insert([msgObj]).select();
-    if (data) {
-      setMessages((prev) => [...prev, data[0]]);
-      setNewMessage('');
-    }
+    setMessages((prev) => [...prev, { ...userObj, id: Date.now().toString(), created_at: new Date().toISOString() }]);
+    setNewMessage('');
+
+    // Respons otomatis dari AI jika berkaitan dengan data
+    setTimeout(() => {
+      const aiReply = {
+        id: (Date.now() + 1).toString(),
+        channel_id: activeChannel.id,
+        sender_type: 'agent',
+        sender_name: 'Atlas (Knowledge Agent)',
+        content: `Pesan diterima. Data diproses melalui pipeline PromptQL pada workspace #${activeChannel.name}.`,
+        created_at: new Date().toISOString()
+      };
+      setMessages((prev) => [...prev, aiReply]);
+    }, 1000);
   };
 
   return (
@@ -139,22 +184,20 @@ export default function App() {
             </div>
             
             {channels.length === 0 ? (
-              <>
-                {['general', 'engineering', 'product', 'marketing', 'data-insights', 'onboarding'].map((c) => (
-                  <button
-                    key={c}
-                    onClick={() => setActiveChannel({ id: c, name: c })}
-                    className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                      activeChannel?.name === c
-                        ? 'bg-blue-600/20 text-blue-400 font-semibold'
-                        : 'text-slate-400 hover:bg-slate-800/40 hover:text-slate-200'
-                    }`}
-                  >
-                    <Hash size={14} />
-                    <span className="truncate">{c}</span>
-                  </button>
-                ))}
-              </>
+              ['general', 'engineering', 'product', 'marketing', 'data-insights', 'onboarding'].map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setActiveChannel({ id: c, name: c })}
+                  className={`w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                    activeChannel?.name === c
+                      ? 'bg-blue-600/20 text-blue-400 font-semibold'
+                      : 'text-slate-400 hover:bg-slate-800/40 hover:text-slate-200'
+                  }`}
+                >
+                  <Hash size={14} />
+                  <span className="truncate">{c}</span>
+                </button>
+              ))
             ) : (
               channels.map((channel) => {
                 const IconComp = iconMap[channel.icon] || Hash;
@@ -235,11 +278,11 @@ export default function App() {
         </div>
       </aside>
 
-      {/* 2. AREA UTAMA (MIDDLE WORKSPACE) */}
+      {/* 2. AREA UTAMA */}
       <main className="flex-1 flex flex-col overflow-hidden bg-[#0a0d16]">
         
         {!activeChannel ? (
-          /* TAMPILAN AWAL WELCOME SCREEN (Sesuai Gambar Referensi) */
+          /* TAMPILAN AWAL WELCOME SCREEN */
           <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
             <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-blue-600 to-cyan-400 flex items-center justify-center shadow-2xl shadow-blue-500/20 mb-6">
               <Sparkles size={32} className="text-white animate-pulse" />
@@ -247,27 +290,75 @@ export default function App() {
             <h1 className="text-xl font-bold text-white tracking-wide mb-2">
               Welcome to your AI Workspace
             </h1>
-            <p className="text-xs text-slate-400 max-w-sm leading-relaxed">
+            <p className="text-xs text-slate-400 max-w-sm leading-relaxed mb-6">
               Select a channel to start collaborating with your AI agents, or pick a suggested prompt to see the magic.
             </p>
+            <button 
+              onClick={() => setActiveChannel({ id: 'engineering', name: 'engineering' })}
+              className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
+            >
+              <Hash size={14} /> Open #engineering Channel
+            </button>
           </div>
         ) : (
-          /* TAMPILAN CHAT DENGAN CHANNEL AKTIF */
+          /* TAMPILAN CHAT DENGAN SIMULASI DATA DUMMY */
           <div className="flex-1 flex flex-col h-full">
+            
             {/* Header Channel */}
             <div className="px-6 py-3.5 border-b border-slate-800/60 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Hash size={18} className="text-blue-400" />
                 <h2 className="text-sm font-bold text-white">{activeChannel.name}</h2>
               </div>
-              <span className="text-[10px] text-slate-500">Supabase Realtime Sync</span>
+              
+              {/* Tombol Eksekusi PromptQL */}
+              <button 
+                onClick={handleRunPromptQL}
+                disabled={isExecutingPromptQL}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-medium px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5 shadow-md shadow-emerald-900/30 disabled:opacity-50"
+              >
+                <Play size={12} />
+                <span>{isExecutingPromptQL ? 'Executing PromptQL...' : 'Execute PromptQL Pipeline'}</span>
+              </button>
             </div>
+
+            {/* TABEL DATA DUMMY SBLC RISK (Khusus di Channel Engineering) */}
+            {activeChannel.name === 'engineering' && (
+              <div className="bg-[#0f1524] border-b border-slate-800/80 p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+                    <AlertTriangle size={14} className="text-amber-400" />
+                    SBLC Real-Time Risk Data (Dummy Data Stream)
+                  </span>
+                  <span className="text-[10px] text-slate-500">Updated: Just Now</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2 text-xs">
+                  {sblcDataDummy.map((item) => (
+                    <div key={item.blockId} className="bg-[#131a2d] p-2.5 rounded-lg border border-slate-800 space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-slate-200">{item.blockId}</span>
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold ${
+                          item.riskLevel === 'Critical' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'
+                        }`}>
+                          {item.riskLevel}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-slate-400">{item.kriIndicator}</p>
+                      <div className="text-[10px] text-slate-500 flex justify-between pt-1">
+                        <span>Delay: <strong className="text-slate-300">{item.delayDays} d</strong></span>
+                        <span>Impact: <strong className="text-red-400">${item.costImpactUSD.toLocaleString()}</strong></span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Chat History */}
             <div className="flex-1 overflow-y-auto p-6 space-y-4">
               {messages.length === 0 ? (
                 <div className="text-xs text-slate-500 italic py-8 text-center">
-                  Belum ada percakapan di #{activeChannel.name}. Kirim pesan pertama di bawah.
+                  Belum ada percakapan di #{activeChannel.name}. Klik <strong>Execute PromptQL Pipeline</strong> di atas untuk menjalankan simulasi AI.
                 </div>
               ) : (
                 messages.map((msg) => (
@@ -282,7 +373,7 @@ export default function App() {
                           {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
-                      <div className="text-slate-300 leading-relaxed bg-[#0f1524] p-3 rounded-lg border border-slate-800/80">
+                      <div className="text-slate-300 leading-relaxed bg-[#0f1524] p-3 rounded-lg border border-slate-800/80 whitespace-pre-wrap font-mono text-[11px]">
                         {msg.content}
                       </div>
                     </div>
@@ -314,10 +405,10 @@ export default function App() {
 
       </main>
 
-      {/* 3. SIDEBAR KANAN (PANEL AGENTS & KNOWLEDGE BRAIN) */}
+      {/* 3. SIDEBAR KANAN */}
       <aside className="w-80 bg-[#0d121f] border-l border-slate-800/60 flex flex-col shrink-0">
         
-        {/* Header Tab & Action Buttons */}
+        {/* Header Tab */}
         <div className="p-3 border-b border-slate-800/60 flex items-center justify-between">
           <div className="flex items-center gap-1 bg-[#13192b] p-0.5 rounded-lg border border-slate-800/60 text-xs">
             <button 
@@ -339,13 +430,12 @@ export default function App() {
         {/* Content Area Sidebar Kanan */}
         <div className="p-4 space-y-4 overflow-y-auto flex-1">
           
-          {/* Tombol Deploy New Agent */}
           <button className="w-full border border-dashed border-slate-800 hover:border-slate-700 bg-[#101625] text-slate-300 rounded-lg py-2.5 px-3 text-xs font-medium flex items-center justify-center gap-2 transition-colors">
             <PlusCircle size={14} className="text-slate-400" />
             <span>Deploy new agent</span>
           </button>
 
-          {/* LIST KARTU AGENT (Sesuai Referensi Gambar) */}
+          {/* LIST KARTU AGENT */}
           <div className="space-y-3">
             {[
               {
@@ -378,8 +468,6 @@ export default function App() {
               }
             ].map((ag) => (
               <div key={ag.name} className="bg-[#101625] border border-slate-800/80 rounded-xl p-3.5 space-y-2.5">
-                
-                {/* Header Agent */}
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-2.5">
                     <div className="w-7 h-7 rounded-lg bg-emerald-950/60 border border-emerald-800/50 flex items-center justify-center text-emerald-400 font-bold text-xs">
@@ -395,12 +483,10 @@ export default function App() {
                   </div>
                 </div>
 
-                {/* Deskripsi Agent */}
                 <p className="text-[11px] text-slate-400 leading-relaxed">
                   {ag.desc}
                 </p>
 
-                {/* Tags Capabilities */}
                 <div className="flex flex-wrap gap-1 pt-1">
                   {ag.tags.map((tag) => (
                     <span key={tag} className="text-[9px] bg-[#171f33] border border-slate-800 text-slate-400 px-2 py-0.5 rounded-full">
@@ -409,11 +495,9 @@ export default function App() {
                   ))}
                 </div>
 
-                {/* Status Footer */}
                 <div className="pt-2 border-t border-slate-800/50 flex items-center justify-between text-[10px] text-slate-500">
                   <span>Status: <strong className={ag.status === 'active' ? 'text-emerald-400' : 'text-slate-400'}>{ag.status}</strong></span>
                 </div>
-
               </div>
             ))}
           </div>
