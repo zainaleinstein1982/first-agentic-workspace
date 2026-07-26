@@ -64,7 +64,7 @@ export default function App() {
         id: Date.now().toString(),
         channel_id: activeChannel.id,
         sender_type: 'user',
-        sender_name: 'Jane Doe',
+        sender_name: 'BaZain',
         content: `RUN PROMPTQL: Jalankan analisis risiko SBLC & strategi mitigasi keterlambatan sekuens blok.`,
         created_at: new Date().toISOString()
       };
@@ -96,7 +96,7 @@ export default function App() {
       id: Date.now().toString(),
       channel_id: activeChannel.id,
       sender_type: 'user',
-      sender_name: 'Jane Doe',
+      sender_name: 'BaZain',
       content: userText,
       created_at: new Date().toISOString()
     };
@@ -132,7 +132,7 @@ export default function App() {
       return;
     }
 
-    // AKSI 2: Jika mengetik perintah Edit Data Blok (Diperbarui ke Blok 3B Painting)
+    // AKSI 2: Jika mengetik perintah Edit Data Blok
     if (
       activeChannel.name === 'engineering' && 
       (lowerText.includes('edit data') || lowerText.includes('edit blok') || lowerText.includes('- edit'))
@@ -348,10 +348,10 @@ export default function App() {
         <div className="p-3 border-t border-slate-800/60 flex items-center justify-between bg-[#0a0d16]">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-full bg-emerald-600 flex items-center justify-center font-bold text-xs text-white">
-              JD
+              BZ
             </div>
             <div className="flex flex-col">
-              <span className="text-xs font-semibold text-slate-200">Jane Doe</span>
+              <span className="text-xs font-semibold text-slate-200">BaZain</span>
               <span className="text-[10px] text-slate-500">Workspace Admin</span>
             </div>
           </div>
