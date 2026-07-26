@@ -1,10 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Star, 
-  ChevronLeft, 
-  Circle, 
-  Triangle, 
-  Square, 
   Hash, 
   Layers, 
   Code, 
@@ -19,13 +14,10 @@ import {
   MessageSquare, 
   FileText, 
   MoreVertical,
-  CheckCircle2,
-  Clock,
   Sparkles,
   ListTodo,
   Users,
-  Compass,
-  Folder
+  Compass
 } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 
@@ -34,116 +26,12 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-// ==========================================
-// 1. DATA MILESTONE SBLC
-// ==========================================
-const milestoneData = [
-  { id: 'edc', code: 'EDC', label: 'EDC - Effective...', year: '2026', icon: Star, color: 'text-amber-400', position: '18%' },
-  { id: 'fsc', code: 'FSC', label: 'FSC - First Ste...', year: '2027', icon: ChevronLeft, color: 'text-slate-400', position: '42%' },
-  { id: 'kl', code: 'KL', label: 'KL - Keel Laying', year: '2027', icon: Circle, color: 'text-blue-500', position: '54%' },
-  { id: 'l', code: 'L (Launching)', label: 'L - Launching', year: '2027', icon: Triangle, color: 'text-blue-600', position: '70%', rotateIcon: 'rotate-180' },
-  { id: 'hat', code: 'HAT & SAT', label: 'HAT & SAT - Har...', year: '2028', icon: Square, color: 'text-red-500', position: '82%' },
-  { id: 'd', code: 'D (Delivery)', label: 'D - Delivery', year: '2028', icon: Star, color: 'text-red-500', position: '92%' },
-];
-
 const iconMap: Record<string, React.ElementType> = {
   Layers, Hash, Code, Box, TrendingUp, BarChart, BookOpen
 };
 
 // ==========================================
-// 2. KOMPONEN DASHBOARD MILESTONE SBLC
-// ==========================================
-export const MilestoneDashboard: React.FC = () => {
-  return (
-    <div className="w-full mx-auto space-y-5 font-sans text-slate-100 mb-6">
-      <div className="bg-slate-950/90 border border-slate-800/80 rounded-xl p-6 shadow-xl">
-        <div className="mb-6 space-y-1">
-          <h2 className="text-lg font-bold text-white tracking-wide">
-            Diagram Milestone SBLC
-          </h2>
-          <p className="text-xs text-slate-400 leading-relaxed">
-            Otomatis dari tugas yang punya field <strong className="text-slate-300">Epic</strong> (nama proyek) dan <strong className="text-slate-300">Tanggal mulai</strong>.
-          </p>
-        </div>
-
-        <div className="relative my-10 px-4 py-8">
-          <div className="absolute -top-6 w-full flex justify-between text-xs font-semibold text-slate-400 border-b border-dashed border-slate-800/40 pb-2">
-            <span className="ml-[16%]">2026</span>
-            <span className="ml-[10%]">2027</span>
-            <span className="mr-[8%]">2028</span>
-          </div>
-
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 font-extrabold text-sm text-slate-200 tracking-wider">
-            SBLC 2026
-          </div>
-
-          <div className="ml-28 relative h-10 flex items-center">
-            <div className="w-full border-b-2 border-dotted border-slate-600/60" />
-            <div className="absolute left-[38%] top-0 bottom-0 border-l border-dashed border-slate-600/50" />
-
-            {milestoneData.map((item) => {
-              const IconComponent = item.icon;
-              return (
-                <div
-                  key={item.id}
-                  className="absolute flex flex-col items-center -translate-x-1/2 group cursor-pointer"
-                  style={{ left: item.position }}
-                >
-                  <span className="text-[11px] font-mono text-slate-300 mb-2 whitespace-nowrap opacity-90 group-hover:opacity-100 transition-opacity">
-                    {item.label}
-                  </span>
-                  <div className="bg-slate-950 p-1 rounded-full z-10 transition-transform group-hover:scale-125">
-                    <IconComponent 
-                      size={14} 
-                      className={`${item.color} fill-current ${item.rotateIcon || ''}`} 
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-6 pt-4 border-t border-slate-800/60 text-xs text-slate-300 ml-28">
-          {milestoneData.map((item) => {
-            const IconComponent = item.icon;
-            return (
-              <div key={item.id} className="flex items-center gap-2">
-                <IconComponent 
-                  size={13} 
-                  className={`${item.color} fill-current ${item.rotateIcon || ''}`} 
-                />
-                <span className="font-mono text-[11px]">{item.code}</span>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-slate-950/90 border border-slate-800/80 rounded-xl p-4 shadow-lg">
-          <div className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Completed Tasks</div>
-          <div className="text-2xl font-extrabold text-white mt-2">3</div>
-        </div>
-        <div className="bg-slate-950/90 border border-slate-800/80 rounded-xl p-4 shadow-lg">
-          <div className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Incomplete Tasks</div>
-          <div className="text-2xl font-extrabold text-white mt-2">3</div>
-        </div>
-        <div className="bg-slate-950/90 border border-slate-800/80 rounded-xl p-4 shadow-lg">
-          <div className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Overdue Tasks</div>
-          <div className="text-2xl font-extrabold text-white mt-2">0</div>
-        </div>
-        <div className="bg-slate-950/90 border border-slate-800/80 rounded-xl p-4 shadow-lg">
-          <div className="text-[11px] font-bold tracking-wider text-slate-400 uppercase">Total Tasks</div>
-          <div className="text-2xl font-extrabold text-white mt-2">6</div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// ==========================================
-// 3. KOMPONEN UTAMA APPLICATION (App)
+// KOMPONEN UTAMA APPLICATION (App)
 // ==========================================
 export default function App() {
   const [channels, setChannels] = useState<any[]>([]);
@@ -211,8 +99,6 @@ export default function App() {
       setNewMessage('');
     }
   };
-
-  const isEngineeringChannel = activeChannel?.name === 'engineering';
 
   return (
     <div className="flex h-screen bg-slate-950 text-slate-100 font-sans overflow-hidden">
@@ -285,7 +171,7 @@ export default function App() {
             ))}
           </div>
 
-          {/* SECTION 3: KNOWLEDGE BRAIN (DENGAN KEBAB MENU 3 TITIK) */}
+          {/* SECTION 3: KNOWLEDGE BRAIN */}
           <div className="space-y-1">
             <div className="text-[10px] font-bold text-slate-500 uppercase px-3 py-1 tracking-wider flex items-center gap-1">
               <Brain size={12} /> Knowledge Brain
@@ -299,7 +185,6 @@ export default function App() {
                   <FileText size={13} className="text-slate-500 shrink-0" />
                   <span className="truncate">{item.title}</span>
                 </div>
-                {/* MENU 3 TITIK KEMBALI */}
                 <button className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-500 hover:text-slate-200 transition-opacity">
                   <MoreVertical size={13} />
                 </button>
@@ -321,7 +206,7 @@ export default function App() {
         </div>
       </aside>
 
-      {/* 2. AREA UTAMA (MIDDLE: CHAT ROOM & SBLC MILESTONE) */}
+      {/* 2. AREA UTAMA (MIDDLE: CHAT ROOM AREA) */}
       <main className="flex-1 flex flex-col overflow-hidden bg-slate-900/40 p-6 space-y-4">
         
         {/* Header Channel Aktif */}
@@ -335,13 +220,8 @@ export default function App() {
           <span className="text-[10px] text-slate-500 font-mono">Supabase Realtime Sync</span>
         </div>
 
-        {/* Content Scrollable Area */}
+        {/* Content Scrollable Area (Hanya Percakapan Chat) */}
         <div className="flex-1 overflow-y-auto space-y-4 pr-1">
-          
-          {/* Milestone SBLC Tampil di Channel #engineering */}
-          {isEngineeringChannel && <MilestoneDashboard />}
-
-          {/* List Chat Messages */}
           <div className="space-y-3">
             {messages.length === 0 ? (
               <div className="text-xs text-slate-500 italic py-4 text-center">
