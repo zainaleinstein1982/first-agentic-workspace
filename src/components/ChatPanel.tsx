@@ -10,7 +10,12 @@ type Props = {
   messages: Message[];
   loading: boolean;
   onSendUserMessage: (content: string) => Promise<Message | null>;
-  onSendAgentMessage: (agentName: string, content: string, messageType: Message['message_type'], metadata?: Record<string, unknown>) => Promise<Message | null>;
+  onSendAgentMessage: (
+    agentName: string,
+    content: string,
+    messageType: Message['message_type'],
+    metadata?: Record<string, unknown>
+  ) => Promise<Message | null>;
 };
 
 const SUGGESTED_PROMPTS = [
@@ -20,7 +25,14 @@ const SUGGESTED_PROMPTS = [
   { icon: '🤖', text: 'Draft a Q1 planning meeting summary' },
 ];
 
-export function ChatPanel({ channel, agents, messages, loading, onSendUserMessage, onSendAgentMessage }: Props) {
+export function ChatPanel({
+  channel,
+  agents,
+  messages,
+  loading,
+  onSendUserMessage,
+  onSendAgentMessage,
+}: Props) {
   const [input, setInput] = useState('');
   const [isThinking, setIsThinking] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -31,24 +43,37 @@ export function ChatPanel({ channel, agents, messages, loading, onSendUserMessag
     }
   }, [messages, isThinking]);
 
-  const handleSend = async () => {
-    if (!input.trim() || !channel) return;
-    const userText = input.trim();
-    setInput('');
-    await onSendUserMessage(userText);
+  // Fungsi internal untuk memproses pengiriman pesan ke agent
+  const processMessage = async (text: string) => {
+    if (!text.trim() || !channel) return;
+
+    await onSendUserMessage(text);
     setIsThinking(true);
 
-    const agentName = pickAgent(userText, agents);
-    const response = generateAgentResponse(userText, agentName, agents);
+    const agentName = pickAgent(text, agents);
+    const response = generateAgentResponse(text, agentName, agents);
 
     setTimeout(async () => {
       setIsThinking(false);
-      await onSendAgentMessage(response.agentName, response.content, response.messageType, response.metadata);
+      await onSendAgentMessage(
+        response.agentName,
+        response.content,
+        response.messageType,
+        response.metadata
+      );
     }, 1400);
   };
 
-  const handleSuggestion = (text: string) => {
-    setInput(text);
+  const handleSend = async () => {
+    if (!input.trim()) return;
+    const userText = input.trim();
+    setInput('');
+    await processMessage(userText);
+  };
+
+  // Diperbaiki: Langsung mengirim pesan saat kartu suggested prompt diklik
+  const handleSuggestion = async (text: string) => {
+    await processMessage(text);
   };
 
   if (!channel) {
@@ -78,7 +103,12 @@ export function ChatPanel({ channel, agents, messages, loading, onSendUserMessag
         </div>
         <div className="flex items-center gap-2">
           {agents.slice(0, 4).map(a => (
-            <div key={a.id} className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: `${a.avatar_color}20`, border: `1.5px solid ${a.avatar_color}` }} title={`${a.name} — ${a.role}`}>
+            <div
+              key={a.id}
+              className="w-7 h-7 rounded-full flex items-center justify-center"
+              style={{ background: `${a.avatar_color}20`, border: `1.5px solid ${a.avatar_color}` }}
+              title={`${a.name} — ${a.role}`}
+            >
               <Bot size={13} style={{ color: a.avatar_color }} />
             </div>
           ))}
